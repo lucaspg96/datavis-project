@@ -5,19 +5,21 @@ app.controller("mainController",function($scope,$rootScope,$http){
 	var url = "http://localhost:8000/"
 
 	$scope.openMenu = function(id,name){
-		// $http.get(url+"restaurant/itens/"+id).then(res => {
-		// 	$rootScope.$broadcast("setMenu",res.data)
-		// })
-
-		$http.get(url+"restaurant/similar/"+id).then(res => {
-			$rootScope.$broadcast("setGraph",res.data)
+		toggleLoading()
+		$http.get(url+"restaurant/itens/"+id).then(res => {
+			toggleLoading()
+			$rootScope.$broadcast("setMenu",res.data)
 		})
+
+		// $http.get(url+"restaurant/similar/"+id).then(res => {
+		// 	$rootScope.$broadcast("setGraph",res.data)
+		// })
 	}
 
 	$scope.init = function(){
-		$("#analysis").hide()
+		$("#analysis div").hide()
 		$scope.map = L.map('map').setView([0,0], 2);
-        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        L.tileLayer('http://c.tile.stamen.com/watercolor/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors',
                     maxZoom: 17
                     }).addTo($scope.map);
@@ -29,8 +31,9 @@ app.controller("mainController",function($scope,$rootScope,$http){
 				let key = d.lat.toString()+"_"+d.lng.toString()
 				if(!$scope.markers[key]){
 					var marker = L.circle([d.lat,d.lng],{
-						color: '#3a3',
-						opacity: 0.5,
+						color: '#000',
+						fillColor: '#aaa',
+						opacity: 0.8,
 						radius: 100
 					}).addTo($scope.map);
 					marker.menus = []
@@ -46,7 +49,7 @@ app.controller("mainController",function($scope,$rootScope,$http){
 				let text = "<ul class='res-menus'>"
 
 				m.menus.forEach(menu => {
-					text += "<li id='"+menu.id+"'>"+menu.place+"</li>"
+					text += "<li id='"+menu.id+"'>("+menu.id+") "+menu.place+"</li>"
 				})
 
 				text += "</ul>"
@@ -59,5 +62,6 @@ app.controller("mainController",function($scope,$rootScope,$http){
 				$scope.openMenu($(this).attr('id'),$(this).text())
 			})
 		})
+
 	}
 })

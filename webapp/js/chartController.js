@@ -5,7 +5,7 @@ app.controller("chartController",function($scope){
 	}
 
 	$scope.generate = function(attrib){
-
+		let width = $("#map").width()
 		let labels = {
 			menus_appeared:"Ocorrências",
 			first_appeared:"Primeira aparição",
@@ -23,7 +23,7 @@ app.controller("chartController",function($scope){
 						barDim.bottom(1)[0][attrib],
 						barDim.top(1)[0][attrib]])
 
-		$scope.chart.width(800)
+		$scope.chart.width(width)
 					.height(150)
 					.dimension(barDim)
 					.group(barGroup)
@@ -32,7 +32,7 @@ app.controller("chartController",function($scope){
 					.brushOn(false)
 					.elasticY(true)
 					.centerBar(true)
-					.xAxisLabel(labels[attrib])
+					// .xAxisLabel(labels[attrib])
 					.yAxisLabel("Quantidade")
 					.renderHorizontalGridLines(true)
 		let i = 0
@@ -42,7 +42,7 @@ app.controller("chartController",function($scope){
 		let scatterDim = $scope.fact.dimension(d => [getI(),d[attrib]])
 		let scatterGroup = scatterDim.group()
 		// console.log(scatterGroup.top(5))
-		$scope.scatter.width(800)
+		$scope.scatter.width(width)
 					.height(150)
 					.brushOn(false)
 					.dimension(scatterDim)
@@ -51,13 +51,14 @@ app.controller("chartController",function($scope){
 					.x(d3.scale.linear().domain([0,getI()]))
 					.symbolSize(8)
 					.xAxisLabel("Pratos")
-					.yAxisLabel(labels[attrib],10)
+					.yAxisLabel("",10)
 					
 		
         if(!$scope.dataTable){
         	$scope.dataTable = dc.dataTable("#dc-table-graph");
-	        $scope.dataTable.dimension(barDim)
-				            .group(d => "Pratos")
+	        $scope.dataTable.width(width)
+	        				.dimension(barDim)
+				            .group(d => " ")
 				            .size($scope.dataSize)
 				            .columns([
 				              d => d.name,
@@ -77,7 +78,7 @@ app.controller("chartController",function($scope){
 	$scope.$on("setMenu",(event,data) => {
 		$scope.dataSize = data.length
 		$scope.dataTable = undefined
-		$("#analysis").show()
+		$("#analysis div").show()
 		// console.log(data)
 		$scope.fact = crossfilter(data)
 		$scope.attr = "menus_appeared"

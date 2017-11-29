@@ -9,21 +9,23 @@
       crossorigin=""/>
 
   	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
-	<link rel="stylesheet" type="text/css" href="css/dc.css">  	
-
-  	<link rel="stylesheet" type="text/css" href="css/style.css">
     
 
     <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
       integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
       crossorigin=""></script>
 
+    <link rel="stylesheet" type="text/css" href="css/dc.css">  	
+
+  	<link rel="stylesheet" type="text/css" href="css/style.css">
+
 	<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 	<script type="text/javascript" src="js/crossfilter.js"></script>
 	<script type="text/javascript" src="js/dc.js"></script>
 
 	<script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+
+	<script type="text/javascript" src="js/loading.js"></script>
 
 	<script type="text/javascript" src="js/angular.min.js"></script>
 
@@ -32,22 +34,36 @@
 	<script type="text/javascript" src="js/chartController.js"></script>
 
 	<script type="text/javascript" src="js/graphController.js"></script>
+
 </head>
 
 <body ng-app="datavis" ng-controller="mainController" ng-init="init()">
 	<div class='container-fluid'>
+
 		<div id="map"></div>
 
 		<div id="analysis" ng-controller="chartController">
-			<select ng-model="attr" ng-change="updateGraph(attr)">
-				<option value="first_appeared">Primeira aparição</option>
-				<option value="highest_price">Maior preço</option>
-				<option value="menus_appeared">Ocorrências</option>
-			</select>
-			<div id="bar"></div>
-			<div id="scatter"></div>
+			<div>
+				<h2>Menu analizado: <span id="menuName">HOTEL EASTMAN</span></h2>
 
-			<div id="table-warper" style="width:800px;max-height:480px;overflow-y:scroll">
+				<ul id="menuData">
+					<li>Date: 1900-04-15</li>
+					<li>Evendo: BREAKFAST</li>
+					<li>Número de páginas: 2 </li>
+					<li>Número de pratos: 67</li>
+				</ul>
+
+				<center>
+					<select ng-model="attr" ng-change="updateGraph(attr)">
+						<option value="first_appeared">Primeira aparição</option>
+						<option value="highest_price">Maior preço</option>
+						<option value="menus_appeared">Ocorrências</option>
+					</select>
+				</center>	
+				<div id="bar"></div>
+				<div id="scatter"></div>
+
+				<div id="table-warper" style="max-height:450px;overflow-y:scroll">
                   <table class="table table-hover" id="dc-table-graph">
                       <thead>
                           <tr class="header">
@@ -59,11 +75,12 @@
                       </thead>
                   </table>
                 </div>
+           	</div>
 		</div>
 
-		<div id="graph-container" ng-controller="graphController">
+		<!-- <div id="graph-container" ng-controller="graphController">
 			<div id="graph"></div>
-		</div>
+		</div> -->
 	</div>
 
 </body>
