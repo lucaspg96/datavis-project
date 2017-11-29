@@ -1,10 +1,11 @@
 from flask import Flask
 from flask_restful import Resource,Api
 from flask_restful import reqparse
+from flask_cors import CORS
 from pymongo import MongoClient 
 
 app = Flask(__name__)
-
+CORS(app)
 api = Api(app)
 
 connection = MongoClient('localhost', 27017)
@@ -51,14 +52,15 @@ class Location(Resource):
 
 		menu_collection = db['menus']
 
-		data = menu_collection.find({}, {'_id': False,'place':True}).distinct("place")
+		data = menu_collection.find({}, {'_id': False,'place':True,'id':True})
 
 		restaurents = []
 		for element in data:
 			# if element['name'] != "":
 				# restaurents.append(element)
-			if element in locations:
-				restaurents.append({"name":element,"lat":locations[element]['lat'],"lng":locations[element]['lng']})
+			if element['place'] in locations:
+				element.update({"lat":locations[element['place']]['lat'],"lng":locations[element['place']]['lng']})
+				restaurents.append(element)
 		# 	#restaurents.insert({'name':element.name, 'lat':element.lat,'lon':element.lon})	
 		# 	restaurents.insert({'name':element.name, 'sponsor': element.sponsor,'location':element.location})
 
