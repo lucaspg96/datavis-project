@@ -118,6 +118,7 @@ class RestaurentsSameIten(Resource):
 					menus_data = menus_collection.find({'id':iten['menu_id']})	
 
 					for menu in menus_data:
+						menu['_id'] = str(menu['_id'])
 						itens.append(menu)
 		return itens				
 

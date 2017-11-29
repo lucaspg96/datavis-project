@@ -1,16 +1,21 @@
 app = app = angular.module('datavis',[]);
 
-app.controller("mainController",function($scope,$http){
+app.controller("mainController",function($scope,$rootScope,$http){
 
 	var url = "http://localhost:8000/"
 
 	$scope.openMenu = function(id,name){
-		$http.get(url+"restaurant/itens/"+id).then(res => {
-			console.log(res.data)
+		// $http.get(url+"restaurant/itens/"+id).then(res => {
+		// 	$rootScope.$broadcast("setMenu",res.data)
+		// })
+
+		$http.get(url+"restaurant/similar/"+id).then(res => {
+			$rootScope.$broadcast("setGraph",res.data)
 		})
 	}
 
 	$scope.init = function(){
+		$("#analysis").hide()
 		$scope.map = L.map('map').setView([0,0], 2);
         L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors',
@@ -25,7 +30,8 @@ app.controller("mainController",function($scope,$http){
 				if(!$scope.markers[key]){
 					var marker = L.circle([d.lat,d.lng],{
 						color: '#3a3',
-						opacity: 0.5
+						opacity: 0.5,
+						radius: 100
 					}).addTo($scope.map);
 					marker.menus = []
 
