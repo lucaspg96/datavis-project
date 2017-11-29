@@ -13,7 +13,32 @@ db = connection['ufcdatavis']
 
 #??
 parser = reqparse.RequestParser()
+locations = {}
 
+with open("../locations-2017-11-16 12:42:08.068035.txt") as f:
+	for line in f:
+		place,coords= line.split(" -> ")
+		coords = coords.replace("\n","")
+		data = db['menus'].find_one({"place":place})
+
+		if not data:
+			place = place.rstrip()
+
+			data = db['menus'].find_one({"place":place})
+			if not data:
+				place = place.rstrip()
+				print("{} -> {}".format(place,len(place)))
+				not_found+=1
+
+			else:
+				name = data['place']
+				locations[name] = {'lat':coords.split(',')[0],'lng':coords.split(',')[1]}
+		
+		else:
+			name = data['place']
+			locations[name] = {'lat':coords.split(',')[0],'lng':coords.split(',')[1]}
+
+print("{} locations loaded".format(len(locations)))
 #Collections:
 #dishes, menus e itens_menu
 
@@ -26,13 +51,14 @@ class Location(Resource):
 
 		menu_collection = db['menus']
 
-		data = menu_collection.find({}, {'_id': False})
+		data = menu_collection.find({}, {'_id': False,'place':True}).distinct("place")
 
 		restaurents = []
-
 		for element in data:
-			if element['name'] != "":
-				restaurents.append(element)
+			# if element['name'] != "":
+				# restaurents.append(element)
+			if element in locations:
+				restaurents.append({"name":element,"lat":locations[element]['lat'],"lng":locations[element]['lng']})
 		# 	#restaurents.insert({'name':element.name, 'lat':element.lat,'lon':element.lon})	
 		# 	restaurents.insert({'name':element.name, 'sponsor': element.sponsor,'location':element.location})
 
@@ -85,7 +111,7 @@ class RestaurentsSameIten(Resource):
 			itens_menu_data_aux = itens_menu_collection.find({'dish_id':iten_menu['dish_id']},{'_id':False})
 
 			for iten in itens_menu_data_aux:
-				print iten
+				print(iten)
 				if iten['menu_id'] != id_place:
 					menus_data = menus_collection.find({'id':iten['menu_id']})	
 
