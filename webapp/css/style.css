@@ -8,17 +8,9 @@ h4 span {
     font-weight:normal;
 }
   
-h2 {
-    float: right;
-  }
-  
-h2 span {
-    font-size:14px;
-    font-weight:normal;
-}
 
 .container-fluid{
-	padding-top: 20px;
+	padding-top: 1vh;
 	width: 1300px;
 	margin: 0 auto;
 }
@@ -35,6 +27,7 @@ h2 span {
 #analysis{
 	background: url("../img/menu2.jpg") no-repeat;
 	padding: 20px 10px;
+	float: right;
 	
 }
 #analysis h2{

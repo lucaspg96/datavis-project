@@ -3,6 +3,7 @@ from flask_restful import Resource,Api
 from flask_restful import reqparse
 from flask_cors import CORS
 from pymongo import MongoClient 
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -16,28 +17,35 @@ db = connection['ufcdatavis']
 parser = reqparse.RequestParser()
 locations = {}
 
-with open("../locations-2017-11-16 12:42:08.068035.txt") as f:
-	for line in f:
-		place,coords= line.split(" -> ")
-		coords = coords.replace("\n","")
-		data = db['menus'].find_one({"place":place})
+# with open("../locations-2017-11-16 12:42:08.068035.txt") as f:
+# 	for line in f:
+# 		place,coords= line.split(" -> ")
+# 		coords = coords.replace("\n","")
+# 		data = db['menus'].find_one({"place":place})
 
-		if not data:
-			place = place.rstrip()
+# 		if not data:
+# 			place = place.rstrip()
 
-			data = db['menus'].find_one({"place":place})
-			if not data:
-				place = place.rstrip()
-				print("{} -> {}".format(place,len(place)))
-				not_found+=1
+# 			data = db['menus'].find_one({"place":place})
+# 			if not data:
+# 				place = place.rstrip()
+# 				print("{} -> {}".format(place,len(place)))
+# 				not_found+=1
 
-			else:
-				name = data['place']
-				locations[name] = {'lat':coords.split(',')[0],'lng':coords.split(',')[1]}
+# 			else:
+# 				name = data['place']
+# 				locations[name] = {'lat':coords.split(',')[0],'lng':coords.split(',')[1]}
 		
-		else:
-			name = data['place']
-			locations[name] = {'lat':coords.split(',')[0],'lng':coords.split(',')[1]}
+# 		else:
+# 			name = data['place']
+# 			locations[name] = {'lat':coords.split(',')[0],'lng':coords.split(',')[1]}
+
+# with open("location.json",'w') as f:
+# 	json.dump(locations,f,indent=4)
+
+with open("location.json") as f:
+	locations = json.load(f)
+
 
 print("{} locations loaded".format(len(locations)))
 #Collections:
@@ -52,7 +60,8 @@ class Location(Resource):
 
 		menu_collection = db['menus']
 
-		data = menu_collection.find({}, {'_id': False,'place':True,'id':True})
+		data = menu_collection.find({}, {'_id': False,'place':True,'id':True, 'event':True,'date':True,
+											'page_count':2,	'dish_count':True})
 
 		restaurents = []
 		for element in data:

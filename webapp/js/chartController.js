@@ -81,7 +81,7 @@ app.controller("chartController",function($scope){
 		$("#analysis div").show()
 		// console.log(data)
 		$scope.fact = crossfilter(data)
-		$scope.attr = "menus_appeared"
-		$scope.generate("menus_appeared")
+		$scope.attr = "highest_price"
+		$scope.generate("highest_price")
 	})
 })

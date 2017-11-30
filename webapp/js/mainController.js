@@ -4,9 +4,20 @@ app.controller("mainController",function($scope,$rootScope,$http){
 
 	var url = "http://localhost:8000/"
 
-	$scope.openMenu = function(id,name){
+	$scope.openMenu = function(markerKey,menuIndex){
+		let menu = $scope.markers[markerKey].menus[menuIndex]
+
+		$scope.map.setView([menu.lat,menu.lng], 13);
+
 		toggleLoading()
-		$http.get(url+"restaurant/itens/"+id).then(res => {
+		$http.get(url+"restaurant/itens/"+menu.id).then(res => {
+			$("#menuName").text(menu.place)
+
+			$("#menuData").empty()
+			$("#menuData").append("<li>Data: "+menu.date+"</li>")
+			$("#menuData").append("<li>Evento: "+menu.event+"</li>")
+			$("#menuData").append("<li>Número de páginas: "+menu.page_count+"</li>")
+			$("#menuData").append("<li>Número de pratos: "+menu.dish_count+"</li>")
 			toggleLoading()
 			$rootScope.$broadcast("setMenu",res.data)
 		})
@@ -32,9 +43,9 @@ app.controller("mainController",function($scope,$rootScope,$http){
 				if(!$scope.markers[key]){
 					var marker = L.circle([d.lat,d.lng],{
 						color: '#000',
-						fillColor: '#aaa',
-						opacity: 0.8,
-						radius: 100
+						fillColor: '#777',
+						opacity: 0.9,
+						radius: 500
 					}).addTo($scope.map);
 					marker.menus = []
 
@@ -47,9 +58,10 @@ app.controller("mainController",function($scope,$rootScope,$http){
 
 			$.each($scope.markers,(k,m) => {
 				let text = "<ul class='res-menus'>"
-
+				let i=0
 				m.menus.forEach(menu => {
-					text += "<li id='"+menu.id+"'>("+menu.id+") "+menu.place+"</li>"
+					text += "<li marker='"+k+"' menu='"+i+"'>("+menu.id+") "+menu.place+"</li>"
+					i++
 				})
 
 				text += "</ul>"
@@ -59,7 +71,8 @@ app.controller("mainController",function($scope,$rootScope,$http){
 		})
 		$scope.map.on('popupopen',function(){	
 			$(".res-menus li").click(function(){
-				$scope.openMenu($(this).attr('id'),$(this).text())
+				console.log("click")
+				$scope.openMenu($(this).attr("marker"),$(this).attr('menu'))
 			})
 		})
 
