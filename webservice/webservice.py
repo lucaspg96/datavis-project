@@ -131,7 +131,20 @@ class RestaurentsSameIten(Resource):
 						itens.append(menu)
 		return itens				
 
+#Class for analyze the data about all dishes
+class DishesStats(Resource):
 
+	@staticmethod
+	def get(attribute, minimum, maximum):
+
+		#collections with dishes
+		dishes = db['dishes']
+
+		#find the dishes with the params threshold
+		dishes_result = dishes.find({attribute : {'$gt' : minimum}, attribute : {'$lte' : maximum} })
+
+		return dishes_result
+	
 
 # For now return just the restaurants, 
 # Waiting for the database modifications so it can return the restaurant identification with coordenates
@@ -141,5 +154,7 @@ api.add_resource(Location, '/locations/', endpoint='get_locations')
 api.add_resource(ItensRestaurant, '/restaurant/itens/<string:id_place>/', endpoint='dishes')
 
 api.add_resource(RestaurentsSameIten, '/restaurant/similar/<string:id_place>/', endpoint='restaurentsSimilar')
+
+api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/', endpoint='dishesStats')
 
 app.run(host='0.0.0.0', port=8000, debug=True)
