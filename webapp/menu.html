@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Análise Não Sensorial</title>
+
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+      integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+      crossorigin=""/>
+
+  	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    
+
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+      integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+      crossorigin=""></script>
+
+    <link rel="stylesheet" type="text/css" href="css/dc.css">  	
+
+  	<link rel="stylesheet" type="text/css" href="css/style.css">
+
+	<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="js/crossfilter.js"></script>
+	<script type="text/javascript" src="js/dc.js"></script>
+
+	<script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+
+	<script type="text/javascript" src="js/loading.js"></script>
+
+	<script type="text/javascript" src="js/angular.min.js"></script>
+
+	<script type="text/javascript" src="js/mainController.js"></script>
+
+	<script type="text/javascript" src="js/chartController.js"></script>
+
+	<script type="text/javascript" src="js/graphController.js"></script>
+
+	<!-- <script type="text/javascript" src="js/bootstrap.min.js"></script> -->
+
+</head>
+
+<body ng-app="datavis" ng-controller="mainController" ng-init="init()">
+	<div id="menus-data">
+		<div class='container-fluid'>
+
+			<div id="map"></div>
+
+			<div id="analysis" ng-controller="chartController">
+				<div>
+					<h2>Menu analizado: <span id="menuName"></span></h2>
+
+					<ul id="menuData">
+						
+					</ul>
+
+					<center>
+						<select ng-model="attr" ng-change="updateGraph(attr)">
+							<option value="first_appeared">Primeira aparição</option>
+							<option value="highest_price">Maior preço</option>
+							<option value="menus_appeared">Ocorrências</option>
+						</select>
+					</center>	
+					<div id="bar"></div>
+					<div id="scatter"></div>
+
+					<div id="table-warper" style="max-height:400px;overflow-y:scroll">
+	                  <table class="table table-hover" id="dc-table-graph">
+	                      <thead>
+	                          <tr class="header">
+	                          	  <th>Id</th>
+	                              <th>Nome</th>
+	                              <th>Primeira aparição</th>
+	                              <th>Maior preço</th>
+	                              <th>Ocorrências</th>
+	                          </tr>
+	                      </thead>
+	                  </table>
+	                </div>
+	           	</div>
+			</div>
+
+			<!-- <div id="graph-container" ng-controller="graphController">
+				<div id="graph"></div>
+			</div> -->
+		</div>
+	</div>
+
+</body>
+</html>

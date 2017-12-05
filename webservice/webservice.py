@@ -179,6 +179,20 @@ class DishesInfo(Resource):
             result.append(dish)
             
         return result    
+
+class DishesSnapshot(Resource):
+       
+    @staticmethod
+    def get():
+        dishes = db['dishes']
+
+        
+        query = dishes.find({"first_appeared":{"$gt":1},
+        					"highest_price":{"$gt":0},},{"_id":False}).limit(15)
+
+        result = [dish for dish in query]
+            
+        return result  
         
 # For now return just the restaurants, 
 # Waiting for the database modifications so it can return the restaurant identification with coordenates
@@ -192,5 +206,7 @@ api.add_resource(RestaurentsSameIten, '/restaurant/similar/<string:id_place>/', 
 api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/<int:minimum>', endpoint='dishesStats')
 
 api.add_resource(DishesInfo, '/dishes/top/<string:typeTop>/<int:minimum>', endpoint='dishesInfo')
+
+api.add_resource(DishesSnapshot, '/dishes/snapshot/', endpoint='dishesSnapshot')
 
 app.run(host='0.0.0.0', port=8000, debug=True)
