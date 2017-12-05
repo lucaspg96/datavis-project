@@ -35,7 +35,7 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 
 	$scope.pricesGraph = function(){
 
-		$http.get(url+'restaurant/similar/highest_price/0/30')
+		$http.get(url+'restaurant/similar/highest_price/0/100000')
 			.then(res=>{
 				dishes = res.data
 				console.log(dishes)
@@ -43,7 +43,57 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 			}).catch(err =>{
 				console.log(err);
 			});
+	};
+
+	$scope.getTopDishes = function(){
+
+		$http.get(url+'dishes/top/0')
+		.then(res=>{
+			var topDishes = res.data;
+			console.log(topDishes);
+
+			$scope.updateTopDishes(topDishes);
+		})
+		.catch(er=>{
+
+		});
+
 	}
+
+	$scope.updateTopDishes = function(dishes){
+
+
+		var compraracaoAppear = function (a, b) { 
+        	return a.menus_appeared > b.menus_appeared?-1:1;
+    	};
+
+		d3.select("#top-dishes").selectAll("div.h-bar")
+		.data(dishes)
+		.enter().append('div')
+		.attr("class", "h-bar")
+			.append('span');
+
+
+		d3.select('#top-dishes').selectAll('div.h-bar')
+			.data(dishes)
+			.style("width", function (d) {
+				return d.menus_appeared/7.3+'px';
+			})
+			.style("background-color", function (d) {
+					return "#020984";
+				})
+			.select('span').text(function (d){
+				return d.name +" - Oferecido:  "+ d.menus_appeared;
+			});
+
+		if(compraracaoAppear)
+			d3.select("#top-dishes")
+				.selectAll("div.h-bar") 
+				.sort(compraracaoAppear);
+		
+
+		
+	};
 
 	$scope.updateGraphLastAppeared =  function(dishes){
 
@@ -107,4 +157,5 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 
 	$scope.dishesFiltered = [];
 	$scope.pricesGraph();
+	$scope.getTopDishes();
 })
