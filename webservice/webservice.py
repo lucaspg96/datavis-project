@@ -142,7 +142,7 @@ class DishesStats(Resource):
         dishes = db['dishes']
 
         #find the dishes with the params threshold
-        dishes_result = dishes.find({attribute : {'$gt' : minimum}, attribute : {'$lte' : maximum} },{'_id':False})
+        dishes_result = dishes.find({attribute : {'$gt' : minimum}},{'_id':False})
         
         dishes = []
         
@@ -188,7 +188,7 @@ api.add_resource(ItensRestaurant, '/restaurant/itens/<string:id_place>/', endpoi
 
 api.add_resource(RestaurentsSameIten, '/restaurant/similar/<string:id_place>/', endpoint='restaurentsSimilar')
 
-api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/<int:minimum>/<int:maximum>', endpoint='dishesStats')
+api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/<int:minimum>', endpoint='dishesStats')
 
 api.add_resource(DishesInfo, '/restaurant/similar/<string:typeTop>/<int:minimum>', endpoint='dishesInfo')
 
