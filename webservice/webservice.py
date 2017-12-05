@@ -168,17 +168,22 @@ class DishesInfo(Resource):
         ]
 
         dishes_ids = itens.aggregate(pipeline)
+
+        print(dishes_ids)
         
         ids = []
-        for i in dishes_ids:
-            ids.append(i['dish_id'])
         
-        query = dishes.find({'dish_id' : {'$in': ids} })
+        for i in dishes_ids:
+        	print(i)
+        	ids.append(i['_id'])
+        
+        query = dishes.find({'id' : {'$in': ids} },{'_id':False})
 
         result = []
         for dish in query:
             result.append(dish)
             
+        print(result)
         return result    
 
 class DishesSnapshot(Resource):
