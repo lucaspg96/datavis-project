@@ -158,13 +158,13 @@ class DishesInfo(Resource):
         dishes = db['dishes']
 
         dishes_ids = menus.group({
-            key: {"dish_id" : 1},
-            cond: {"price" : {'$gt' : minimum} },
-            reduce: Code("""function(curr, result ) {
+            'key': {"dish_id" : 1},
+            'cond': {"price" : {'$gt' : minimum} },
+            'reduce': Code("""function(curr, result ) {
                 result.count++;
             }"""),
-            initial: { count : 0 }
-        }).sort({count: -1}).limit(10)
+            'initial': { count : 0 }
+        }).sort({'count': -1}).limit(10)
         
         ids = []
         for i in dishes_ids:
