@@ -136,7 +136,7 @@ class RestaurentsSameIten(Resource):
 class DishesStats(Resource):
 
     @staticmethod
-    def get(attribute, minimum, maximum):
+    def get(attribute, minimum):
 
         #collections with dishes
         dishes = db['dishes']
