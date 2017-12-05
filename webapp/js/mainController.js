@@ -3,10 +3,18 @@ app = app = angular.module('datavis',[]);
 app.controller("mainController",function($scope,$rootScope,$http){
 
 	var url = "http://localhost:8000/"
-	var dishes = [];
+	var fillColor = '#777'
+	var color = '#000'
+	var rollBackCircle;
 
 
 	$scope.openMenu = function(markerKey,menuIndex){
+		$scope.markers[markerKey].setStyle({fillColor: "red", color:"yellow"})
+		
+		if(rollBackCircle){
+			rollBackCircle.setStyle({"fillColor": fillColor, "color":color})
+		}
+		rollBackCircle = $scope.markers[markerKey]
 		let menu = $scope.markers[markerKey].menus[menuIndex]
 
 		$scope.map.setView([menu.lat,menu.lng], 13);
@@ -41,13 +49,13 @@ app.controller("mainController",function($scope,$rootScope,$http){
                     }).addTo($scope.map);
 
 			$scope.markers = {}
-
+			console.log(res.data)
 			res.data.forEach(d => {
 				let key = d.lat.toString()+"_"+d.lng.toString()
 				if(!$scope.markers[key]){
 					var marker = L.circle([d.lat,d.lng],{
-						color: '#000',
-						fillColor: '#777',
+						"color": color,
+						"fillColor": fillColor,
 						opacity: 0.9,
 						radius: 500
 					}).addTo($scope.map);
@@ -61,10 +69,16 @@ app.controller("mainController",function($scope,$rootScope,$http){
 			})
 
 			$.each($scope.markers,(k,m) => {
-				let text = "<ul class='res-menus'>"
+
+				m.menus.sort((a,b) => {
+					return a.date>b.date ? 1 : -1
+				})
+
+				let text = "<ul class='res-menus'><h5>"+m.menus[0].place+"</h5>"
 				let i=0
+				let span = "<span class='glyphicon glyphicon-list-alt'></span>"
 				m.menus.forEach(menu => {
-					text += "<li marker='"+k+"' menu='"+i+"'>("+menu.id+") "+menu.place+"</li>"
+					text += "<li marker='"+k+"' menu='"+i+"'>"+span+menu.date+"</li>"
 					i++
 				})
 

@@ -116,6 +116,11 @@ a,a:hover{
   color: white;
 }
 
-#map{
-  box-shadow: 5px 5px #888;
+
+.card.data{
+  width: 250px;
+}
+
+.data div h6{
+  font-size: 15px;
 }
