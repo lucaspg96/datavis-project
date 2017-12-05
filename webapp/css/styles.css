@@ -97,3 +97,16 @@ body.modal-open {
   flex: none;
   max-width: 100%;
 }
+
+.display-4{
+  font-size: 30px;
+}
+
+.display-4, #map{
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#map img{
+  max-height: 74px;
+}

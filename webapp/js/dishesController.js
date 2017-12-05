@@ -35,7 +35,7 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 
 	$scope.pricesGraph = function(){
 
-		$http.get(url+'restaurant/similar/highest_price/0')
+		$http.get(url+'restaurant/similar/highest_price/0/30')
 			.then(res=>{
 				dishes = res.data
 				console.log(dishes)
