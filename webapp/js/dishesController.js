@@ -58,7 +58,22 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 
 		});
 
-	}
+	};
+
+	$scope.getMenuPages = function(){
+		
+				$http.get(url+'menus/pages')
+				.then(res=>{
+					var menuPages = res.data;
+					console.log(menuPages);
+		
+					$scope.updateMenuPages(menuPages);
+				})
+				.catch(er=>{
+					console.log(er);
+				});
+		
+			};
 
 	$scope.updateTopDishes = function(dishes){
 
@@ -93,6 +108,30 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 		
 
 		
+	};
+
+	$scope.updateMenuPages = function(manuPages){
+	
+		var typeCrimeBarChart = dc.barChart("#menu-pages");
+
+		var facts = crossfilter(manuPages);
+
+		var numPagesDim = facts.dimension(function(d){
+			return d.count;
+		  });
+
+		var numPagesCount = numPagesDim.group();
+
+		typeCrimeBarChart.width(960)
+		.height(150)
+		.margins({top:10, right:10, bottom:20, left:40})
+		.dimension(numPagesDim)
+		.x(d3.scale.ordinal())
+		.xUnits(dc.units.ordinal)
+		.renderHorizontalGridLines(true)
+		.group(numPagesCount);
+
+		dc.renderAll();
 	};
 
 	$scope.updateGraphLastAppeared =  function(dishes){
@@ -158,4 +197,5 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 	$scope.dishesFiltered = [];
 	$scope.pricesGraph();
 	$scope.getTopDishes();
+	$scope.getMenuPages();
 })
