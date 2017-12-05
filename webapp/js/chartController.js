@@ -19,9 +19,23 @@ app.controller("chartController",function($scope){
 		let barGroup = barDim.group().reduceCount()
 		// console.log(barDim.top(5))
 
-		let domain = d3.scale.linear().domain([
+		let domain;
+
+		if(barDim.top(1)[0][attrib] - barDim.bottom(1)[0][attrib] > 0){
+			let step = (barDim.top(1)[0][attrib] - barDim.bottom(1)[0][attrib])/5
+			domain = d3.scale.ordinal().domain([
+						barDim.bottom(1)[0][attrib],
+						barDim.bottom(1)[0][attrib]+step,
+						barDim.bottom(1)[0][attrib]+2*step,
+						barDim.bottom(1)[0][attrib]+3*step,
+						barDim.top(1)[0][attrib]])
+			$scope.chart.xUnits(dc.units.ordinal)
+		}
+		else{
+			domain = d3.scale.linear().domain([
 						barDim.bottom(1)[0][attrib],
 						barDim.top(1)[0][attrib]])
+		}
 
 		$scope.chart.width(width)
 					.height(150)
@@ -35,11 +49,8 @@ app.controller("chartController",function($scope){
 					// .xAxisLabel(labels[attrib])
 					.yAxisLabel("Quantidade")
 					.renderHorizontalGridLines(true)
-		let i = 0
-		function getI(){
-			return i++
-		}
-		let scatterDim = $scope.fact.dimension(d => [getI(),d[attrib]])
+		
+		let scatterDim = $scope.fact.dimension(d => [d.i,d[attrib]])
 		let scatterGroup = scatterDim.group()
 		// console.log(scatterGroup.top(5))
 		$scope.scatter.width(width)
@@ -48,7 +59,7 @@ app.controller("chartController",function($scope){
 					.dimension(scatterDim)
 					.group(scatterGroup)
 					.clipPadding(10)
-					.x(d3.scale.linear().domain([0,getI()]))
+					.x(d3.scale.linear().domain([0,$scope.dataSize]))
 					.symbolSize(8)
 					.xAxisLabel("Pratos")
 					.yAxisLabel("",10)
@@ -61,6 +72,7 @@ app.controller("chartController",function($scope){
 				            .group(d => " ")
 				            .size($scope.dataSize)
 				            .columns([
+				              d => d.i,
 				              d => d.name,
 				              d => d.first_appeared,
 				              d => d.highest_price,
@@ -70,7 +82,7 @@ app.controller("chartController",function($scope){
         }
 		
 		$scope.dataTable.sortBy(d => d[attrib])
-				        .order(d3.ascending)
+				        .order(d3.descending)
 
         dc.renderAll();
 	}
@@ -78,6 +90,14 @@ app.controller("chartController",function($scope){
 	$scope.$on("setMenu",(event,data) => {
 		$scope.dataSize = data.length
 		$scope.dataTable = undefined
+
+		let i = 0
+		function getI(){
+			return i++
+		}
+
+		data.forEach(d => d.i=getI())
+
 		$("#analysis div").show()
 		// console.log(data)
 		$scope.fact = crossfilter(data)

@@ -85,22 +85,23 @@ class ItensRestaurant(Resource):
 		itens_menu_collection = db['itens_menu']
 		dishes = db['dishes']
 
-		data_itens_menu = itens_menu_collection.find({'menu_id':int(id_place)},{'_id':False})
+		# data_itens_menu = itens_menu_collection.find({'menu_id':int(id_place)},{'_id':False})
+		data_itens_menu = itens_menu_collection.find({'menu_id':int(id_place)},{'_id':False}).distinct("dish_id")
 
+		itens = [dish for dish in dishes.find({"id":{"$in":data_itens_menu}},{"_id":False})]
 
-		itens = []
-
-		print(data_itens_menu.count())
-		total = data_itens_menu.count()
-		num = 1
-		for iten_menu  in data_itens_menu:
-			print('----------------------------------')
-			print(str(num)+' of '+ str(total))
-			num= num+1
-			data_dishes = dishes.find({'id':iten_menu['dish_id']},{'_id':False})
-			print(data_dishes)
-			for element in data_dishes:
-				itens.append(element)
+		print(len(data_itens_menu))
+		print(len(itens))
+		# total = data_itens_menu.count()
+		# num = 1
+		# for iten_menu  in data_itens_menu:
+		# 	print('----------------------------------')
+		# 	print(str(num)+' of '+ str(total))
+		# 	num= num+1
+		# 	data_dishes = dishes.find({'id':iten_menu['dish_id']},{'_id':False})
+		# 	print(data_dishes)
+		# 	for element in data_dishes:
+		# 		itens.append(element)
 
 
 		return itens

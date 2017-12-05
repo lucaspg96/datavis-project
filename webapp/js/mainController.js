@@ -31,13 +31,15 @@ app.controller("mainController",function($scope,$rootScope,$http){
 
 	$scope.init = function(){
 		$("#analysis div").hide()
-		$scope.map = L.map('map').setView([0,0], 2);
-        L.tileLayer('http://c.tile.stamen.com/watercolor/{z}/{x}/{y}.png', {
+		toggleLoading("body")
+		
+		$http.get(url+"locations").then(res => {
+			$scope.map = L.map('map').setView([0,0], 2);
+        	L.tileLayer('http://c.tile.stamen.com/watercolor/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors',
                     maxZoom: 17
                     }).addTo($scope.map);
-		
-		$http.get(url+"locations").then(res => {
+
 			$scope.markers = {}
 
 			res.data.forEach(d => {
@@ -70,11 +72,13 @@ app.controller("mainController",function($scope,$rootScope,$http){
 
 				m.bindPopup(text)
 			})
-		})
-		$scope.map.on('popupopen',function(){	
-			$(".res-menus li").click(function(){
-				console.log("click")
-				$scope.openMenu($(this).attr("marker"),$(this).attr('menu'))
+
+			toggleLoading("body")
+			$scope.map.on('popupopen',function(){	
+				$(".res-menus li").click(function(){
+					console.log("click")
+					$scope.openMenu($(this).attr("marker"),$(this).attr('menu'))
+				})
 			})
 		})
 

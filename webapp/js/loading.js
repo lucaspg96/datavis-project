@@ -158,8 +158,8 @@ LoadingOverlay - A flexible loading overlay jQuery plugin
     
 }(jQuery));
 
-function toggleLoading() {
-  var target = $('#analysis');
+function toggleLoading(element='#analysis') {
+  var target = $(element);
   if (!target.hasClass('loading')) {
     target.addClass('loading')
     target.LoadingOverlay("show");
