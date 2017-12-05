@@ -92,7 +92,7 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 		d3.select('#top-dishes').selectAll('div.h-bar')
 			.data(dishes)
 			.style("width", function (d) {
-				return d.menus_appeared/7.3+'px';
+				return d.menus_appeared/7.6+'px';
 			})
 			.style("background-color", function (d) {
 					return "#020984";
