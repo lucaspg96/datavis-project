@@ -143,9 +143,41 @@ class DishesStats(Resource):
 		#find the dishes with the params threshold
 		dishes_result = dishes.find({attribute : {'$gt' : minimum}, attribute : {'$lte' : maximum} })
 
-		return dishes_result
+        dishes = []
+        for dish in dishes_result:
+            dishes.append(dish)
+        
+		return dishes
 	
 
+class DishesInfo(Resource):
+       
+    @staticmethod
+	def get(typeTop, minimum):
+        menus = db['menus']
+        dishes = db['dishes']
+
+        dishes_ids = menus.group({
+            key: {"dish_id" : 1},
+            cond: {"price" : {'$gt' : minimum} },
+            reduce: function( curr, result ) {
+                result.count++;
+            },
+            initial: { count : 0 }
+        }).sort({count: -1}).limit(10)
+        
+        ids = []
+        for i in dishes_ids:
+            ids.append(i['dish_id'])
+        
+        query = dishes.find({'dish_id' : {'$in': ids} })
+
+        result = []
+        for dish in query:
+            result.append(dish)
+            
+        return result    
+        
 # For now return just the restaurants, 
 # Waiting for the database modifications so it can return the restaurant identification with coordenates
 api.add_resource(Location, '/locations/', endpoint='get_locations')
@@ -156,5 +188,7 @@ api.add_resource(ItensRestaurant, '/restaurant/itens/<string:id_place>/', endpoi
 api.add_resource(RestaurentsSameIten, '/restaurant/similar/<string:id_place>/', endpoint='restaurentsSimilar')
 
 api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/<string:minimum>/<string:maximum>', endpoint='dishesStats')
+
+api.add_resource(DishesInfo, '/restaurant/similar/<string:typeTop>/<string:minimum>', endpoint='dishesInfo')
 
 app.run(host='0.0.0.0', port=8000, debug=True)
