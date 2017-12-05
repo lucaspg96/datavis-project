@@ -134,35 +134,35 @@ class RestaurentsSameIten(Resource):
 #Class for analyze the data about all dishes
 class DishesStats(Resource):
 
-	@staticmethod
-	def get(attribute, minimum, maximum):
+    @staticmethod
+    def get(attribute, minimum, maximum):
 
-		#collections with dishes
-		dishes = db['dishes']
+        #collections with dishes
+        dishes = db['dishes']
 
-		#find the dishes with the params threshold
-		dishes_result = dishes.find({attribute : {'$gt' : minimum}, attribute : {'$lte' : maximum} })
-
+        #find the dishes with the params threshold
+        dishes_result = dishes.find({attribute : {'$gt' : minimum}, attribute : {'$lte' : maximum} })
+        
         dishes = []
+        
         for dish in dishes_result:
             dishes.append(dish)
         
-		return dishes
-	
+        return dishes
 
 class DishesInfo(Resource):
        
     @staticmethod
-	def get(typeTop, minimum):
+    def get(typeTop, minimum):
         menus = db['menus']
         dishes = db['dishes']
 
         dishes_ids = menus.group({
             key: {"dish_id" : 1},
             cond: {"price" : {'$gt' : minimum} },
-            reduce: function( curr, result ) {
+            reduce: Code("""function(curr, result ) {
                 result.count++;
-            },
+            }"""),
             initial: { count : 0 }
         }).sort({count: -1}).limit(10)
         
