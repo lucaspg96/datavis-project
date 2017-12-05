@@ -141,7 +141,7 @@ class DishesStats(Resource):
         dishes = db['dishes']
 
         #find the dishes with the params threshold
-        dishes_result = dishes.find({attribute : {'$gt' : minimum}, attribute : {'$lte' : maximum} })
+        dishes_result = dishes.find({attribute : {'$gt' : minimum}, attribute : {'$lte' : maximum} },{'_id':False})
         
         dishes = []
         
