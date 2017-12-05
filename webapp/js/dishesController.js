@@ -62,7 +62,7 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 
 	$scope.getMenuPages = function(){
 		
-				$http.get(url+'menus/pages')
+				$http.get(url+'locations/')
 				.then(res=>{
 					var menuPages = res.data;
 					console.log(menuPages);
@@ -117,7 +117,7 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 		var facts = crossfilter(manuPages);
 
 		var numPagesDim = facts.dimension(function(d){
-			return d.count;
+			return d.page_count;
 		  });
 
 		var numPagesCount = numPagesDim.group();
@@ -129,7 +129,19 @@ app.controller("dishesController",function($scope,$rootScope,$http){
 		.x(d3.scale.ordinal())
 		.xUnits(dc.units.ordinal)
 		.renderHorizontalGridLines(true)
-		.group(numPagesCount);
+		.group(numPagesCount)
+		.centerBar(true);
+
+		// typeCrimeBarChart.width(960)
+		// .height(150)
+		// .margins({top:10, right:10, bottom:20, left:40})
+		// .dimension(numPagesDim)
+		// .group(numPagesCount)
+		// .transitionDuration(500)
+		// .centerBar(true)
+		// .gap(40)
+		// .x(d3.scale.linear().domain([0,20]))
+		// .elasticY(true);  
 
 		dc.renderAll();
 	};
