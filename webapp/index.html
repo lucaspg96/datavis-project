@@ -35,9 +35,12 @@
 
 	<script type="text/javascript" src="js/graphController.js"></script>
 
+	<script type="text/javascript" src="js/bootstrap.min.js"></script>
+
 </head>
 
 <body ng-app="datavis" ng-controller="mainController" ng-init="init()">
+	<div id="menus-data">
 	<div class='container-fluid'>
 
 		<div id="map"></div>
@@ -60,7 +63,7 @@
 				<div id="bar"></div>
 				<div id="scatter"></div>
 
-				<div id="table-warper" style="max-height:450px;overflow-y:scroll">
+				<div id="table-warper" style="max-height:400px;overflow-y:scroll">
                   <table class="table table-hover" id="dc-table-graph">
                       <thead>
                           <tr class="header">
@@ -78,6 +81,18 @@
 		<!-- <div id="graph-container" ng-controller="graphController">
 			<div id="graph"></div>
 		</div> -->
+	</div>
+	</div>
+	<br>
+	<div class="container-fluid">
+		<div id="least-appeared">
+			<h4>Número de pratos que deixaram de ser oferecidos por ano</h4>
+		</div>
+
+		<div id="highest_prices">
+				<h4>Número de pratos com maiores preços iguais</h4>
+			</div>
+
 	</div>
 
 </body>
