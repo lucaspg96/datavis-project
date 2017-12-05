@@ -116,6 +116,6 @@ a,a:hover{
   color: white;
 }
 
-.loop{
-  animation-iteration-count: infinite;
+#map{
+  box-shadow: 5px 5px #888;
 }
