@@ -155,6 +155,6 @@ api.add_resource(ItensRestaurant, '/restaurant/itens/<string:id_place>/', endpoi
 
 api.add_resource(RestaurentsSameIten, '/restaurant/similar/<string:id_place>/', endpoint='restaurentsSimilar')
 
-api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/', endpoint='dishesStats')
+api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/<string:minimum>/<string:maximum>', endpoint='dishesStats')
 
 app.run(host='0.0.0.0', port=8000, debug=True)
