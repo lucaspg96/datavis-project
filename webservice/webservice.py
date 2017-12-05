@@ -137,13 +137,13 @@ class RestaurentsSameIten(Resource):
 class DishesStats(Resource):
 
     @staticmethod
-    def get(attribute, minimum):
+    def get(attribute, minimum, limit):
 
         #collections with dishes
         dishes = db['dishes']
 
         #find the dishes with the params threshold
-        dishes_result = dishes.find({"highest_price" : {'$gt' : minimum}},{'_id':False})
+        dishes_result = dishes.find({attribute : {'$gt' : minimum}},{'_id':False}).sort(attribute,-1).limit(limit)
         
         dishes = []
         
@@ -152,21 +152,22 @@ class DishesStats(Resource):
         
         return dishes
 
+#Class for return top 10 pratos
 class DishesInfo(Resource):
        
     @staticmethod
-    def get(typeTop, minimum):
-        menus = db['menus']
+    def get(minimum):
+        itens = db['itens_menu']
         dishes = db['dishes']
 
-        dishes_ids = menus.group({
-            'key': {"dish_id" : 1},
-            'cond': {"price" : {'$gt' : minimum} },
-            'reduce': Code("""function(curr, result ) {
-                result.count++;
-            }"""),
-            'initial': { count : 0 }
-        }).sort({'count': -1}).limit(10)
+        pipeline = [
+        	{"$match" : {"price" : {"$gte" : minimum} } },
+        	{"$group": {"_id": "$dish_id", "count": {"$sum": 1}}},
+        	{"$sort":  {"count" : -1 } },
+        	{"$limit": 10 }
+        ]
+
+        dishes_ids = itens.aggregate(pipeline)
         
         ids = []
         for i in dishes_ids:
@@ -178,7 +179,29 @@ class DishesInfo(Resource):
         for dish in query:
             result.append(dish)
             
-        return result    
+        return result
+
+#Class to show the most commom size of a menu:
+#	return : 
+#			_id : number of pages
+#			count: number of occurences that such size of menu
+class MenuPages(Resource):
+	@staticmethod
+	def get():
+		menus = db['menus']
+
+		pipeline = [
+        	{"$group": {"_id": "$page_count", "count": {"$sum": 1}}},
+        	{"$sort":  {"count" : -1 } }
+        ]
+
+		menus_form = menus.aggregate(pipeline)
+		
+		result = []
+		for menu in menus_form:
+			result.append(menu)
+
+		return result
         
 # For now return just the restaurants, 
 # Waiting for the database modifications so it can return the restaurant identification with coordenates
@@ -189,8 +212,10 @@ api.add_resource(ItensRestaurant, '/restaurant/itens/<string:id_place>/', endpoi
 
 api.add_resource(RestaurentsSameIten, '/restaurant/similar/<string:id_place>/', endpoint='restaurentsSimilar')
 
-api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/<int:minimum>', endpoint='dishesStats')
+api.add_resource(DishesStats, '/restaurant/similar/<string:attribute>/<int:minimum>/<int:limit>', endpoint='dishesStats')
 
-api.add_resource(DishesInfo, '/dishes/top/<string:typeTop>/<int:minimum>', endpoint='dishesInfo')
+api.add_resource(DishesInfo, '/dishes/top/<int:minimum>', endpoint='dishesInfo')
+
+api.add_resource(MenuPages, '/menus/pages', endpoint='menuPages')
 
 app.run(host='0.0.0.0', port=8000, debug=True)
