@@ -50,11 +50,11 @@ export default function CountContainer() {
         wordsFrequencies.current = {};
 
         const newWs = search ?
-            new WebSocket(websocketURL + '/tweets?search=' + encodeURIComponent(search)) :
+            new WebSocket(websocketURL + '/tweets?keywords=' + encodeURIComponent(search)) :
             new WebSocket(websocketURL + '/tweets')
         newWs.onmessage = (message) => {
-            const frequencies = JSON.parse(message.data);
-            Object.entries(frequencies.words).forEach(([word, frequency]) => {
+            const tweet = JSON.parse(message.data);
+            Object.entries(tweet.wordCount).forEach(([word, frequency]) => {
                 wordsFrequencies.current[word] = (wordsFrequencies.current[word] || 0) + frequency;
             });
         };

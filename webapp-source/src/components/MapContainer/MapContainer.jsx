@@ -40,11 +40,18 @@ export function MapContainer() {
     }, [map])
 
     function createMarker(tweet) {
-        L.marker([tweet.lat, tweet.lng], {
-            icon: markerIcon
-        })
-            .addTo(map)
-            .bindPopup(createPopup(tweet))
+        if (tweet.position) {
+            const marker = L.marker(tweet.position, {
+                icon: markerIcon
+            })
+                .addTo(map)
+                .bindPopup(createPopup(tweet))
+
+            setTimeout(() => {
+                marker.remove()
+            }, 5000)
+        }
+
     }
 
     function createPopup(tweet) {

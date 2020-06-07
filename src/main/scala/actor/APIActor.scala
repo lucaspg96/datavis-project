@@ -5,21 +5,18 @@ import java.io.File
 import akka.NotUsed
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.ws.{Message, TextMessage, UpgradeToWebSocket}
-import akka.http.scaladsl.model.{ContentType, ContentTypes, HttpEntity, HttpRequest, HttpResponse, ResponseEntity, Uri}
-import akka.stream.{ActorMaterializer, FlowShape, UniformFanInShape, UniformFanOutShape}
 import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.model.ws.{Message, TextMessage, UpgradeToWebSocket}
+import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Merge, Sink}
+import akka.stream.{FlowShape, UniformFanInShape, UniformFanOutShape}
 import com.typesafe.config.ConfigFactory
 import helper.FlowHelper
-import models.{Tweet, TweetWithGeoLocation, TweetWordCount}
+import models.Tweet
 import twitter.TwitterSource
 import twitter4j.Status
-import akka.http.scaladsl.server.directives._
-import ContentTypeResolver.Default
 
 import scala.concurrent.ExecutionContext
-import scala.io.Source
 
 class APIActor extends Actor with ActorLogging {
 
@@ -27,12 +24,10 @@ class APIActor extends Actor with ActorLogging {
 
   import system._
 
-  private implicit val materializer: ActorMaterializer = ActorMaterializer()
-
   def generateTwitterDataFlow(preProcessingFlow: Flow[Status, Status, NotUsed]#Repr[String],
-                              hashtag: Option[String])
-                             (implicit executionContext: ExecutionContext) = {
-    val (source, closeFunction) = TwitterSource.createSource(hashtag.fold(Nil: List[String])(List(_)):_*)
+                              keywords: Option[String])
+                             (implicit executionContext: ExecutionContext):Flow[Message, TextMessage, Unit] = {
+    val (source, closeFunction) = TwitterSource.createSource(keywords.fold(Nil: List[String])(List(_)):_*)
 
     Flow
       .fromGraph(GraphDSL.create() { implicit b =>
@@ -58,24 +53,15 @@ class APIActor extends Actor with ActorLogging {
 
   def requestHandler: HttpRequest => HttpResponse = {
     case req@HttpRequest(GET, Uri.Path("/tweets"), _, _, _) =>
-      val hashtag = req.uri.query().get("hashtag")
+      val keywords = req.uri.query().get("keywords")
       req.header[UpgradeToWebSocket] match {
         case Some(upgrade) =>
           log.info(s"Novo cliente conectado. Iniciando stream...")
-          req.uri.query().get("geolocated") match {
-            case Some("true") =>
-              val processFlow = FlowHelper
-                .getGeoLocatedTweetsProcessingPipeline
-                .map(Tweet.format.writes(_).toString())
-              upgrade
-                .handleMessages(generateTwitterDataFlow(processFlow, hashtag))
-            case _ =>
-              val processFlow = FlowHelper
-                .getTweetsWordCountProcessingPipeline
-                .map(TweetWordCount.format.writes(_).toString())
-              upgrade
-                .handleMessages(generateTwitterDataFlow(processFlow, hashtag))
-          }
+          val processFlow = FlowHelper
+            .getGeoLocatedTweetsProcessingPipeline
+            .map(Tweet.format.writes(_).toString())
+          upgrade
+            .handleMessages(generateTwitterDataFlow(processFlow, keywords))
 
         case None => HttpResponse(400, entity = "Requisição websocket inválida!")
       }
