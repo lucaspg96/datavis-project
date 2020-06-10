@@ -49,7 +49,7 @@ export function MapContainer() {
 
             setTimeout(() => {
                 marker.remove()
-            }, 5000)
+            }, 20000)
         }
 
     }

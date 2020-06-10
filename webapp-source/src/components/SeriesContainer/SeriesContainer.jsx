@@ -7,96 +7,128 @@ import * as dc from 'dc';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import websocketURL from '../../websocket';
+import { Input, Spin } from 'antd';
+import { Chart } from '@antv/g2';
+import { isEmpty } from 'rambda';
+
+const { Search } = Input;
 
 export default function SeriesContainer() {
 
-    const facts = useRef(crossfilter([]));
+    const [addingWebsocket, setAddingWebsocket] = useState(false)
+    const [chart, setChart] = useState();
 
-    // const timeDimension = facts.current.dimension(d => [d.key, d.date])
-    const timeDimension = facts.current.dimension(d => d.date)
-    const timeCountGroup = timeDimension.group()//.reduceSum(_ => 1)
+    const colors = [
+        "#1F77B4",
+        "#FF7F0E",
+        "#2CA02C",
+        "#9467BD",
+        "#E377C2",
+    ];
+
+    const takenColors = useRef([]);
+
+    // const data = useRef(crossfilter([]));
+    const data = useRef([])
+    // const dimension = data.current.dimension(d => [d.key, d.date]).filterFunction(d => {
+    //     const x = new Date().getTime() - d[1].getTime()
+    //     // console.log(d[1], x)
+    //     return x > 10000
+    // })
+    // const group = dimension.group().reduceSum(_ => 1)
 
     const [sockets, setSockets] = useState({})
 
-    const [chartsProperties, setChartsProperties] = useState([])
 
     function addSocket(keyword = "") {
+        setAddingWebsocket(true)
+
+        const color = colors.filter(c => !takenColors.current.map(c => c[1]).includes(c))[0]
+        takenColors.current.push([keyword, color])
+
         const ws =
             new WebSocket(websocketURL + '/tweets?keywords=' + encodeURIComponent(keyword))
+
+        const newSockets = { ...sockets }
+        newSockets[keyword] = {
+            socket: ws,
+            color
+        }
+        setSockets(newSockets)
+
         ws.onmessage = (message) => {
             const tweet = JSON.parse(message.data);
-            facts.current.add([{ ...tweet, date: new Date(tweet.date), key: keyword }])
+            const newData = [{ ...tweet, date: new Date(tweet.date), key: keyword }]
+            data.current.push(newData[0])
+
         }
 
-        const dimension = facts.current.dimension(d => d.date)
-            .filter(d => d.key === keyword)
-        const group = dimension.group()//.reduceSum(_ => 1)
+        ws.onopen = _ => setAddingWebsocket(false)
 
-        setChartsProperties([...chartsProperties, {
-            key: keyword,
-            dimension,
-            group
-        }])
 
-        setSockets({ keyword: ws })
     }
 
     useEffect(() => {
-        addSocket("netflix")
+        console.log(sockets)
+        if (!isEmpty(sockets) && !chart) drawChart();
+    }, [sockets])
 
-    }, [])
+    function getData() {
+        const now = new Date().getTime()
+        const cleanData = data.current.filter(d => now - d.date.getTime() < 60000)
+        const facts = crossfilter(cleanData)
+        const dimension = facts.dimension(d => [d.key, d.date])
+        const group = dimension.group().reduceSum(_ => 1)
 
-    useEffect(() => {
-        drawChart()
-
-    }, [chartsProperties])
-
-    function generateChart(composite, { dimension, group, key }) {
-
-        return dc.lineChart(composite)
-            .dimension(dimension)
-            .group(group, key)
-
+        return group.all()
+            .map(d => ({ keyword: d.key[0], date: d.key[1].toLocaleTimeString(), value: d.value }))
     }
 
     function drawChart() {
+        const chartData = getData()
+        console.log(chartData, sockets)
+        if (isEmpty(chartData))
+            return setTimeout(drawChart, 2000)
 
-        const xScale = d3.scaleTime()
-            .domain([new Date(), new Date()])
-
-        console.log(chartsProperties)
-
-        const chart = new dc.CompositeChart("#series")
-        chart
-            .compose(chartsProperties.map(props => generateChart(chart, props)))
-            .width(768)
-            .height(480)
-            .x(xScale)
-            .elasticX(true)
-            .elasticY(true)
-            .brushOn(false)
-        // .clipPadding(10)
-        // .dimension(timeDimension)
-        // .group(timeCountGroup)
-        // .colors(['blue'])
-        // .colorAccessor(d => 0);
-
-
-        chart.on('renderlet', function (chart) {
-            d3.selectAll('.line')
-                .style('fill', 'none')
+        const chart = new Chart({
+            container: 'series',
+            autoFit: true,
+            height: 500
         })
 
-        chart.on("postRedraw", _ => {
-            console.log("postRedraw")
-            setTimeout(_ => dc.redrawAll(), 1000)
-        });
-        console.log("draw")
-        dc.renderAll();
-        dc.redrawAll();
+
+        console.log(chartData)
+        chart.data(chartData)
+
+        chart
+            .line()
+            .position('date*value')
+            .color('keyword', k => {
+                return takenColors.current.filter(c => c[0] === k)[0][1];
+            })
+        // .shape('smooth');
+
+        chart.render()
+        setChart(chart)
+
+        function redraw() {
+            const newChartData = getData()
+            console.log(newChartData.length)
+            chart.changeData(newChartData)
+            setTimeout(redraw, 1000);
+        }
+
+        setTimeout(redraw, 1000)
 
     }
 
-    return <div id="series"></div>;
+    return <>
+        <Search onSearch={addSocket} />
+        <Spin spinning={addingWebsocket}>
+            <div id="series"></div>
+        </Spin>
+
+    </>
+        ;
 
 }
