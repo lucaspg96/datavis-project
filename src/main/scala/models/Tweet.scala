@@ -7,7 +7,7 @@ import scala.util.Try
 
 case class Tweet(id: Long,
                  text: String,
-                 date: String,
+                 date: Long,
                  userName: String,
                  position: Option[Seq[Double]],
                  wordCount: Map[String, Int])
@@ -35,7 +35,7 @@ object Tweet {
     Tweet(
       status.getId,
       status.getText,
-      status.getCreatedAt.toString,
+      status.getCreatedAt.getTime,
       status.getUser.getName,
       Try(List(status.getGeoLocation.getLatitude, status.getGeoLocation.getLongitude)).toOption,
       wordCount(status.getText)
