@@ -3,7 +3,7 @@ import { mean, std } from "mathjs";
 import ReactWordcloud from 'react-wordcloud';
 import './CountContainer.scss';
 import CountDown from 'ant-design-pro/lib/CountDown';
-import websocketURL from '../../websocket'
+import websocketURL from '../../socket/index'
 import { Input, InputNumber, Spin, Checkbox, message } from 'antd';
 
 const { Search } = Input;

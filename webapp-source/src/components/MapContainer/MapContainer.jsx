@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOMServer from 'react-dom/server'
 import { Comment } from 'antd';
 import L from 'leaflet'
-import websocketURL from '../../websocket'
+import websocketURL from '../../socket/index'
 import './MapContainer.scss';
 
 const markerIcon = L.divIcon({

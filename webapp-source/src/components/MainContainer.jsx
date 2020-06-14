@@ -12,12 +12,12 @@ export default function MainContainer() {
     return <Tabs defaultActiveKey="3"
         type="card"
     >
-        <TabPane tab="Mapa" key="1">
+        {/* <TabPane tab="Mapa" key="1">
             <MapContainer />
         </TabPane>
         <TabPane tab="Contagem" key="2">
             <CountContainer />
-        </TabPane>
+        </TabPane> */}
         <TabPane tab="Serie" key="3">
             <SeriesContainer />
         </TabPane>
