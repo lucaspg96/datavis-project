@@ -1,6 +1,10 @@
-.leaflet-container{
+#map{
     width: 100vw;
-    height: calc(100vh - 56px);
+    height: 200px;
+}
+
+:root {
+    --pulse-color: gray
 }
 
 .tweet-map-marker {
@@ -9,8 +13,8 @@
     height: 10px;
     width: 10x !important;       
      
-    background-color: rgba(255,255,0, 0.5);
-    box-shadow: 0 0 0 rgba(204,169,44, 0.4);
+    // background-color: rgba(255,255,0, 0.5);
+    box-shadow: 0 0 0 rgba(var(--pulse-color), 0.4);
     transform: scale(1);
     animation: pulse 2s 10;
     transition: opacity 1s;
@@ -19,16 +23,16 @@
 
 @keyframes pulse {
   0% {
-    -moz-box-shadow: 0 0 0 0 rgba(204,169,44, 0.4);
-    box-shadow: 0 0 0 0 rgba(204,169,44, 0.4);
+    -moz-box-shadow: 0 0 0 0 rgba(var(--pulse-color), 0.4);
+    box-shadow: 0 0 0 0 rgba(var(--pulse-color), 0.4);
   }
   70% {
-      -moz-box-shadow: 0 0 0 10px rgba(204,169,44, 0);
-      box-shadow: 0 0 0 10px rgba(204,169,44, 0);
+      -moz-box-shadow: 0 0 0 10px rgba(var(--pulse-color), 0);
+      box-shadow: 0 0 0 10px rgba(var(--pulse-color), 0);
   }
   100% {
-      -moz-box-shadow: 0 0 0 0 rgba(204,169,44, 0);
-      box-shadow: 0 0 0 0 rgba(204,169,44, 0);
+      -moz-box-shadow: 0 0 0 0 rgba(var(--pulse-color), 0);
+      box-shadow: 0 0 0 0 rgba(var(--pulse-color), 0);
   }
 }
 

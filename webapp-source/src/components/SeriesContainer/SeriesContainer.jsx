@@ -8,6 +8,7 @@ import { Input, Spin } from 'antd';
 import { Chart } from '@antv/g2';
 import { isEmpty } from 'rambda';
 import * as SocketController from '../../socket/SocketController';
+import * as MapController from '../../map/MapController';
 
 const { Search } = Input;
 
@@ -38,8 +39,14 @@ export default function SeriesContainer() {
 
     useEffect(() => {
         // series chart listener to collect all tweets
+        MapController.createMap("map");
+
         SocketController.addListenner("time", ({ color, key, date }) => {
             data.current.push({ color, key, date })
+        });
+
+        SocketController.addListenner("map", tweet => {
+            MapController.createMarker(tweet)
         });
     })
 
@@ -71,7 +78,7 @@ export default function SeriesContainer() {
         const chart = new Chart({
             container: 'series',
             autoFit: true,
-            height: 500
+            height: 300
         })
 
 
@@ -103,6 +110,7 @@ export default function SeriesContainer() {
     return <>
         <Search onSearch={addSocket} />
         <div id="series"></div>
+        <div id="map"></div>
     </>
         ;
 

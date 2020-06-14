@@ -1,0 +1,39 @@
+#map{
+    width: 100vw;
+    height: 200px;
+}
+
+$pulse-color: gray;
+
+.tweet-map-marker {
+    border: 1px solid white;
+    border-radius: 50%;
+    height: 10px;
+    width: 10x !important;       
+     
+    // background-color: rgba(255,255,0, 0.5);
+    box-shadow: 0 0 0 rgba($pulse-color, 0.4);
+    transform: scale(1);
+    animation: pulse 2s 10;
+    transition: opacity 1s;
+
+}
+
+@keyframes pulse {
+  0% {
+    -moz-box-shadow: 0 0 0 0 rgba($pulse-color, 0.4);
+    box-shadow: 0 0 0 0 rgba($pulse-color, 0.4);
+  }
+  70% {
+      -moz-box-shadow: 0 0 0 10px rgba($pulse-color, 0);
+      box-shadow: 0 0 0 10px rgba($pulse-color, 0);
+  }
+  100% {
+      -moz-box-shadow: 0 0 0 0 rgba($pulse-color, 0);
+      box-shadow: 0 0 0 0 rgba($pulse-color, 0);
+  }
+}
+
+.leaflet-popup-content{
+    width: 300px;
+}

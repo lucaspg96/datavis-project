@@ -5,68 +5,63 @@ import L from 'leaflet'
 import websocketURL from '../../socket/index'
 import './MapContainer.scss';
 
-const markerIcon = L.divIcon({
-    className: 'css-icon',
-    html: '<div class="tweet-map-marker"></div>'
-});
-
 export function MapContainer() {
 
-    const [map, setMap] = useState(null);
+    // const [map, setMap] = useState(null);
 
-    useEffect(() => {
-        if (map == null) {
-            setMap(L.map('map', {
-                center: [0, 0],
-                zoom: 2,
-                layers: [
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                    }),
-                ]
-            }));
-        }
-    })
+    // useEffect(() => {
+    //     if (map == null) {
+    //         setMap(L.map('map', {
+    //             center: [0, 0],
+    //             zoom: 2,
+    //             layers: [
+    //                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    //                     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    //                 }),
+    //             ]
+    //         }));
+    //     }
+    // })
 
-    useEffect(() => {
-        if (map != null) {
-            const ws = new WebSocket(websocketURL + '/tweets?geolocated=true');
-            ws.onmessage = (message) => {
-                const tweet = JSON.parse(message.data);
-                createMarker(tweet);
-            }
-        }
+    // useEffect(() => {
+    //     if (map != null) {
+    //         const ws = new WebSocket(websocketURL + '/tweets?geolocated=true');
+    //         ws.onmessage = (message) => {
+    //             const tweet = JSON.parse(message.data);
+    //             createMarker(tweet);
+    //         }
+    //     }
 
-    }, [map])
+    // }, [map])
 
-    function createMarker(tweet) {
-        if (tweet.position) {
-            const marker = L.marker(tweet.position, {
-                icon: markerIcon
-            })
-                .addTo(map)
-                .bindPopup(createPopup(tweet))
+    // function createMarker(tweet) {
+    //     if (tweet.position) {
+    //         const marker = L.marker(tweet.position, {
+    //             icon: markerIcon
+    //         })
+    //             .addTo(map)
+    //             .bindPopup(createPopup(tweet))
 
-            setTimeout(() => {
-                marker.remove()
-            }, 20000)
-        }
+    //         setTimeout(() => {
+    //             marker.remove()
+    //         }, 20000)
+    //     }
 
-    }
+    // }
 
-    function createPopup(tweet) {
-        return ReactDOMServer.renderToString(
-            <Comment
-                author={tweet.userName}
-                content={
-                    <p>
-                        {tweet.text}
-                    </p>
-                }
-                datetime={tweet.date}
-            />
-        );
-    }
+    // function createPopup(tweet) {
+    //     return ReactDOMServer.renderToString(
+    //         <Comment
+    //             author={tweet.userName}
+    //             content={
+    //                 <p>
+    //                     {tweet.text}
+    //                 </p>
+    //             }
+    //             datetime={tweet.date}
+    //         />
+    //     );
+    // }
 
     return <div id="map"></div>
 }
