@@ -78,7 +78,7 @@ export default function SeriesContainer() {
         const chart = new Chart({
             container: 'series',
             autoFit: true,
-            height: 300
+            height: 200
         })
 
 

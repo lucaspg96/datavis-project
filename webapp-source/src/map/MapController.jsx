@@ -20,16 +20,19 @@ export function createMap(containerId) {
 }
 
 function createPopup(tweet) {
+
+    const content = <Comment
+        author={tweet.userName}
+        content={
+            <p>
+                {tweet.text}
+            </p>
+        }
+        datetime={tweet.date.toLocaleTimeString()}
+    ></Comment>
+    console.log(content)
     return ReactDOMServer.renderToString(
-        <Comment
-            author={tweet.userName}
-            content={
-                <p>
-                    {tweet.text}
-                </p>
-            }
-            datetime={tweet.date}
-        />
+        content
     );
 }
 
@@ -44,7 +47,7 @@ export function createMarker(tweet, duration = 20000) {
             })
         })
             .addTo(map)
-        //.bindPopup(createPopup(tweet))
+            .bindPopup(createPopup(tweet))
 
         setTimeout(() => {
             marker.remove()
