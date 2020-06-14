@@ -64,5 +64,10 @@ $pulse-color: gray;
 
     .series-container {
         height: 200px;
+
+        &>div>div>svg>g:nth-child(4) {
+            display: none;
+        }
+
     }
 }

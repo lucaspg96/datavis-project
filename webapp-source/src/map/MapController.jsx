@@ -30,7 +30,6 @@ function createPopup(tweet) {
         }
         datetime={tweet.date.toLocaleTimeString()}
     ></Comment>
-    console.log(content)
     return ReactDOMServer.renderToString(
         content
     );

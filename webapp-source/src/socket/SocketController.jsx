@@ -22,3 +22,9 @@ export function addSocket({ keyword, color }) {
     }
 
 }
+
+export function removeSocket(keyword) {
+    const ws = sockets[keyword];
+    ws.close(3000);
+    delete sockets[keyword];
+}
