@@ -2,20 +2,17 @@ import React from 'react';
 import './SeriesContainer.scss'
 import { useRef } from 'react';
 import crossfilter from 'crossfilter';
-import * as d3 from 'd3';
-import * as dc from 'dc';
 import { useState } from 'react';
 import { useEffect } from 'react';
-import websocketURL from '../../websocket';
 import { Input, Spin } from 'antd';
 import { Chart } from '@antv/g2';
 import { isEmpty } from 'rambda';
+import * as SocketController from '../../socket/SocketController';
 
 const { Search } = Input;
 
 export default function SeriesContainer() {
 
-    const [addingWebsocket, setAddingWebsocket] = useState(false)
     const [chart, setChart] = useState();
 
     const colors = [
@@ -28,65 +25,46 @@ export default function SeriesContainer() {
 
     const takenColors = useRef([]);
 
-    // const data = useRef(crossfilter([]));
     const data = useRef([])
-    // const dimension = data.current.dimension(d => [d.key, d.date]).filterFunction(d => {
-    //     const x = new Date().getTime() - d[1].getTime()
-    //     // console.log(d[1], x)
-    //     return x > 10000
-    // })
-    // const group = dimension.group().reduceSum(_ => 1)
-
-    const [sockets, setSockets] = useState({})
-
 
     function addSocket(keyword = "") {
-        setAddingWebsocket(true)
 
         const color = colors.filter(c => !takenColors.current.map(c => c[1]).includes(c))[0]
         takenColors.current.push([keyword, color])
 
-        const ws =
-            new WebSocket(websocketURL + '/tweets?keywords=' + encodeURIComponent(keyword))
-
-        const newSockets = { ...sockets }
-        newSockets[keyword] = {
-            socket: ws,
-            color
-        }
-        setSockets(newSockets)
-
-        ws.onmessage = (message) => {
-            const tweet = JSON.parse(message.data);
-            const newData = [{ ...tweet, date: new Date(tweet.date), key: keyword }]
-            data.current.push(newData[0])
-
-        }
-
-        ws.onopen = _ => setAddingWebsocket(false)
-
+        SocketController.addSocket({ keyword, color })
 
     }
 
     useEffect(() => {
-        console.log(sockets)
-        if (!isEmpty(sockets) && !chart) drawChart();
-    }, [sockets])
+        // series chart listener to collect all tweets
+        SocketController.addListenner("time", ({ color, key, date }) => {
+            data.current.push({ color, key, date })
+        });
+    })
+
+    useEffect(() => {
+        if (!isEmpty(takenColors) && !chart) drawChart();
+    }, [takenColors])
 
     function getData() {
-        const now = new Date().getTime()
-        const cleanData = data.current.filter(d => now - d.date.getTime() < 60000)
+        if (isEmpty(data.current)) return []
+
+
+        const now = data.current[data.current.length - 1].date.getTime() - 5000
+        const cleanData = data.current.filter(d => d.date.getTime() < now &&
+            now - d.date.getTime() < 60000)
         const facts = crossfilter(cleanData)
         const dimension = facts.dimension(d => [d.key, d.date])
         const group = dimension.group().reduceSum(_ => 1)
 
         return group.all()
+            .sort((a, b) => a.key[1] < b.key[1])
             .map(d => ({ keyword: d.key[0], date: d.key[1].toLocaleTimeString(), value: d.value }))
     }
 
     function drawChart() {
         const chartData = getData()
-        console.log(chartData, sockets)
         if (isEmpty(chartData))
             return setTimeout(drawChart, 2000)
 
@@ -124,10 +102,7 @@ export default function SeriesContainer() {
 
     return <>
         <Search onSearch={addSocket} />
-        <Spin spinning={addingWebsocket}>
-            <div id="series"></div>
-        </Spin>
-
+        <div id="series"></div>
     </>
         ;
 
