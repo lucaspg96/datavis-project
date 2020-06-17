@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.stream.{ActorMaterializer, OverflowStrategy}
 import twitter4j.conf.ConfigurationBuilder
-import twitter4j.{FilterQuery, Logger, Status, StatusAdapter, TwitterStreamFactory}
+import twitter4j.{FilterQuery, Logger, Query, Status, StatusAdapter, TwitterStreamFactory}
 
 object TwitterSource {
 
@@ -37,16 +37,17 @@ object TwitterSource {
     stream.addListener(listener)
     stream.cleanUp()
 
+    if(hashTags.isEmpty) stream.sample()
+    else {
+      val query: FilterQuery = new FilterQuery()
 
-      val query = new FilterQuery()
-
-      query.locations(Array[Double](-180, -90), Array[Double](180, 90))
-      query.track(hashTags:_*)
+      query.track(hashTags: _*)
+      //    query.locations(Array[Double](-180, -90), Array[Double](0, 0))
       stream.filter(query)
+    }
 
 
-
-    log.info(s"Iniciando stream geolocalizada para hashtags ${hashTags.mkString("[",")","]")}")
+    log.info(s"Iniciando stream geolocalizada para hashtags ${hashTags.mkString("[", ")", "]")}")
 
     (Source.fromPublisher(publisher), stream.shutdown)
   }

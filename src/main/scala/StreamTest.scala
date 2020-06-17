@@ -5,23 +5,21 @@ import helper.FlowHelper
 import models.Tweet
 import twitter.TwitterSource
 
+import scala.concurrent.duration._
+
 object StreamTest {
 
   implicit val system: ActorSystem = ActorSystem()
 
   def main(args: Array[String]): Unit = {
-    val (source, _) = TwitterSource.createSource("#covid")
+    val (source, _) = TwitterSource.createSource("covid")
 
     source
       .via(FlowHelper.getGeoLocatedTweetsProcessingPipeline)
-//      .map{tweet =>
-//        println(tweet.text)
-//        tweet
-//      }
-      .collect{
-        case Tweet(_, tweet, _, _, Some(pos)) => pos
-      }
-      .runWith(Sink.foreach(println))
+      .filter(_.isGeolocated)
+      .map(_.text)
+//      .throttle(1, 2.seconds)
+      .runWith(Sink.foreach(t => println(s"-----------------\n$t\n-----------------")))
   }
 
 }

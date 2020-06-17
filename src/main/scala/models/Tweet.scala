@@ -10,7 +10,11 @@ case class Tweet(id: Long,
                  date: Long,
                  userName: String,
                  position: Option[Seq[Double]],
-                 wordCount: Map[String, Int])
+                 wordCount: Map[String, Int]) {
+
+  def isGeolocated: Boolean = position.isDefined
+
+}
 
 object Tweet {
   val format: OFormat[Tweet] = Json.format
@@ -31,13 +35,31 @@ object Tweet {
       }
   }
 
+  private def getPosition(status: Status): Option[Seq[Double]] = {
+    Try(List(status.getGeoLocation.getLatitude, status.getGeoLocation.getLongitude))
+      .toOption match {
+      case Some(pos) => Some(pos)
+
+      case None =>
+        Try{
+          val boundingBox = status.getPlace.getBoundingBoxCoordinates.flatten
+
+          val lat = boundingBox.map(_.getLatitude).sum / boundingBox.length
+          val lon = boundingBox.map(_.getLongitude).sum / boundingBox.length
+
+          List(lat, lon)
+        }.toOption
+    }
+  }
+
   def apply(status: Status): Tweet = {
+
     Tweet(
       status.getId,
       status.getText,
       status.getCreatedAt.getTime,
       status.getUser.getName,
-      Try(List(status.getGeoLocation.getLatitude, status.getGeoLocation.getLongitude)).toOption,
+      getPosition(status),
       wordCount(status.getText)
     )
   }
