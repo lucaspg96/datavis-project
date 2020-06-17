@@ -2,10 +2,14 @@ package twitter
 
 import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.stream.alpakka.mongodb.javadsl.MongoFlow
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.stream.{ActorMaterializer, OverflowStrategy}
+
+import models.Tweet
 import twitter4j.conf.ConfigurationBuilder
 import twitter4j.{FilterQuery, Logger, Query, Status, StatusAdapter, TwitterStreamFactory}
+
 
 object TwitterSource {
 
@@ -49,7 +53,10 @@ object TwitterSource {
 
     log.info(s"Iniciando stream geolocalizada para hashtags ${hashTags.mkString("[", ")", "]")}")
 
-    (Source.fromPublisher(publisher), stream.shutdown)
+    val src = Source
+      .fromPublisher(publisher)
+
+    (src, stream.shutdown)
   }
 
   def main(args: Array[String]): Unit = {

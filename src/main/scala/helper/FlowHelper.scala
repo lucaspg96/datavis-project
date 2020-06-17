@@ -1,17 +1,35 @@
 package helper
 
 import akka.NotUsed
+import akka.stream.alpakka.mongodb.scaladsl.MongoFlow
 import akka.stream.scaladsl.Flow
 import models.{Tweet, TweetWithGeoLocation, TweetWordCount}
 import twitter4j.Status
+import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.codecs.Macros._
+import com.mongodb.reactivestreams.client.{MongoClients, MongoCollection}
 
 object FlowHelper {
+
+  private val client = MongoClients.create("mongodb://localhost:27017")
+  private val db = client.getDatabase("twitter-vis")
+  private val codecRegistry = fromRegistries(fromProviders(classOf[Tweet]), DEFAULT_CODEC_REGISTRY)
+  private val tweetsCollection: MongoCollection[Tweet] = db
+    .getCollection("tweet", classOf[Tweet])
+    .withCodecRegistry(codecRegistry)
 
   def getGeoLocatedTweetsProcessingPipeline: Flow[Status, Status, NotUsed]#Repr[Tweet] = {
     //TODO apagar
     Flow[Status]
       .map(Tweet(_))
+      .via(mongoInsertionFlow)
   }
+
+  def mongoInsertionFlow = Flow[Tweet]
+    .map(_.withCleanMap)
+      .via(MongoFlow.insertOne[Tweet](tweetsCollection))
+
 
 
 

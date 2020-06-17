@@ -14,6 +14,8 @@ case class Tweet(id: Long,
 
   def isGeolocated: Boolean = position.isDefined
 
+  def withCleanMap: Tweet = this.copy(wordCount = Map.empty)
+
 }
 
 object Tweet {
