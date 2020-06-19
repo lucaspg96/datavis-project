@@ -5,7 +5,8 @@ import akka.actor.ActorSystem
 import akka.stream.alpakka.mongodb.javadsl.MongoFlow
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.stream.{ActorMaterializer, OverflowStrategy}
-
+import helper.FlowHelper
+import helper.FlowHelper.mongoInsertionFlow
 import models.Tweet
 import twitter4j.conf.ConfigurationBuilder
 import twitter4j.{FilterQuery, Logger, Query, Status, StatusAdapter, TwitterStreamFactory}
@@ -23,8 +24,11 @@ object TwitterSource {
     .setOAuthAccessTokenSecret(TwitterAuthConfig.accessTokenSecret)
     .build()
 
-  def createSource(hashTags: String*)
-                  (implicit system: ActorSystem): (Source[Status, NotUsed], () => Unit) = {
+  def createSource(hashTag: String)
+                  (implicit system: ActorSystem):(Source[Tweet, NotUsed], () => Unit) = createSource(Some(hashTag))
+
+  def createSource(hashTag: Option[String] = None)
+                  (implicit system: ActorSystem): (Source[Tweet, NotUsed], () => Unit) = {
     val (actorRef, publisher) = Source
       .actorRef[Status](100, OverflowStrategy.fail)
       .toMat(Sink.asPublisher(true))(Keep.both)
@@ -41,20 +45,18 @@ object TwitterSource {
     stream.addListener(listener)
     stream.cleanUp()
 
-    if(hashTags.isEmpty) stream.sample()
-    else {
-      val query: FilterQuery = new FilterQuery()
-
-      query.track(hashTags: _*)
-      //    query.locations(Array[Double](-180, -90), Array[Double](0, 0))
-      stream.filter(query)
+    hashTag match {
+      case Some(tag) => stream.filter(tag)
+      case None => stream.sample()
     }
 
 
-    log.info(s"Iniciando stream geolocalizada para hashtags ${hashTags.mkString("[", ")", "]")}")
+    log.info(s"Iniciando stream geolocalizada para hashtags ${hashTag}")
 
     val src = Source
       .fromPublisher(publisher)
+      .map(status => Tweet(status, hashTag.getOrElse("")))
+      .via(FlowHelper.mongoInsertionFlow)
 
     (src, stream.shutdown)
   }

@@ -19,13 +19,6 @@ object FlowHelper {
     .getCollection("tweet", classOf[Tweet])
     .withCodecRegistry(codecRegistry)
 
-  def getGeoLocatedTweetsProcessingPipeline: Flow[Status, Status, NotUsed]#Repr[Tweet] = {
-    //TODO apagar
-    Flow[Status]
-      .map(Tweet(_))
-      .via(mongoInsertionFlow)
-  }
-
   def mongoInsertionFlow = Flow[Tweet]
     .map(_.withCleanMap)
       .via(MongoFlow.insertOne[Tweet](tweetsCollection))

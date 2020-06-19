@@ -8,6 +8,7 @@ import scala.util.Try
 case class Tweet(id: Long,
                  text: String,
                  date: Long,
+                 key: String,
                  userName: String,
                  position: Option[Seq[Double]],
                  wordCount: Map[String, Int]) {
@@ -54,12 +55,13 @@ object Tweet {
     }
   }
 
-  def apply(status: Status): Tweet = {
+  def apply(status: Status, key: String): Tweet = {
 
     Tweet(
       status.getId,
       status.getText,
       status.getCreatedAt.getTime,
+      key,
       status.getUser.getName,
       getPosition(status),
       wordCount(status.getText)

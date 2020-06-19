@@ -16,7 +16,6 @@ object StreamTest {
     val (source, _) = TwitterSource.createSource("covid")
 
     source
-      .via(FlowHelper.getGeoLocatedTweetsProcessingPipeline)
       .filter(_.isGeolocated)
       .map(_.text)
 //      .throttle(1, 2.seconds)
