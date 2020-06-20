@@ -62,19 +62,25 @@ export default function SeriesContainer() {
     useEffect(() => {
         data.current.splice(0, data.current.length)
         Object.keys(count.current).forEach(k => count.current[k] = 0)
-        if (seriesChart && !isEmpty(takenColors)) seriesChart.destroy()
+        if (seriesChart && !isEmpty(takenColors)) {
+            seriesChart.destroy()
+            setSeriesChart();
+        }
         if (!isEmpty(takenColors)) {
             try {
                 MapController.createMap("map");
             } catch (error) {
-
+                console.log("Map error:", error)
             }
             drawSeriesChart();
             if (!barChart) drawBarChart();
             else refreshBarChartColors();
         }
         else {
-            if (barChart) barChart.destroy()
+            if (barChart) {
+                barChart.destroy()
+                setBarChart();
+            }
             if (seriesChartRedrawTimeout) clearTimeout(seriesChartRedrawTimeout)
             if (barChartRedrawTimeout) clearTimeout(barChartRedrawTimeout)
         }
@@ -87,11 +93,16 @@ export default function SeriesContainer() {
     }
 
     function refreshBarChartColors() {
-        barChart.interval()
-            .position('key*value')
-            .color('key', k => {
-                return (takenColors.filter(c => c[0] === k)[0] || [1, "rgba(0,0,0,0)"])[1];
-            })
+        try {
+            barChart.interval()
+                .position('key*value')
+                .color('key', k => {
+                    return (takenColors.filter(c => c[0] === k)[0] || [1, "rgba(0,0,0,0)"])[1];
+                })
+        } catch (error) {
+            console.log("Bar colors error:", error)
+        }
+
     }
 
     function getSeriesData() {
@@ -114,7 +125,7 @@ export default function SeriesContainer() {
     function handleRemove(tag) {
         SocketController.removeSocket(tag)
         delete count.current[tag]
-        if (takenColors.length === 1) seriesChart.destroy();
+        // if (takenColors.length === 1) seriesChart.destroy();
         setTakenColors(takenColors.filter(c => c[0] !== tag))
     }
 
