@@ -4,21 +4,27 @@ import { useRef } from 'react';
 import crossfilter from 'crossfilter';
 import { useState } from 'react';
 import { useEffect } from 'react';
-import { Input, Spin, Tag, PageHeader, Row, Col } from 'antd';
+import { Input, Spin, Tag, PageHeader, Row, Col, Card } from 'antd';
 import { Chart } from '@antv/g2';
 import { isEmpty, sum } from 'rambda';
 import * as SocketController from '../../socket/SocketController';
 import * as MapController from '../../map/MapController';
+import CountDown from 'ant-design-pro/lib/CountDown';
 
 const { Search } = Input;
 
-const graphRedrawRate = 1500
+const graphRefreshTimeout = 1500
 const timeWindowSize = 1 * 60 * 1000
 
 export default function SeriesContainer() {
 
+    const [statistics, setStatistics] = useState({});
+    const [targetTime, setTargetTime] = useState();
+
     const [seriesChart, setSeriesChart] = useState();
     const [seriesChartRedrawTimeout, setSeriesChartRedrawTimeout] = useState()
+
+    const metrics = useRef({})
 
     const [barChart, setBarChart] = useState();
     const [barChartRedrawTimeout, setBarChartRedrawTimeout] = useState()
@@ -44,6 +50,17 @@ export default function SeriesContainer() {
         const color = colors.filter(c => !takenColors.map(c => c[1]).includes(c))[0]
         setTakenColors([...takenColors, [keyword, color]])
         SocketController.addSocket({ keyword, color })
+        setTargetTime(new Date().getTime() + graphRefreshTimeout)
+    }
+
+    function updateAll() {
+        setStatistics({
+            users: metrics.current.users.size,
+            retweets: metrics.current.retweets,
+            mediaAndLinks: metrics.current.mediasAndLink
+        })
+
+        setTargetTime(new Date().getTime() + graphRefreshTimeout)
     }
 
     useEffect(() => {
@@ -57,9 +74,20 @@ export default function SeriesContainer() {
         SocketController.addListenner("map", tweet => {
             MapController.createMarker(tweet);
         });
+
+        SocketController.addListenner("metrics", ({ userName, retweet, reply, mediasAndLink }) => {
+            if (!metrics.current.users) metrics.current.users = new Set();
+
+            metrics.current.users.add(userName)
+            if (retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
+            if (reply) metrics.current.replies = (metrics.current.replies || 0) + 1
+            metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + mediasAndLink
+
+        })
     }, [])
 
     useEffect(() => {
+        Object.keys(metrics.current).forEach(k => metrics.current[k] = 0)
         data.current.splice(0, data.current.length)
         Object.keys(count.current).forEach(k => count.current[k] = 0)
         if (seriesChart && !isEmpty(takenColors)) {
@@ -89,7 +117,7 @@ export default function SeriesContainer() {
     function redrawSeriesChart(chart) {
         const data = getSeriesData()
         chart.changeData(data)
-        setSeriesChartRedrawTimeout(setTimeout(_ => redrawSeriesChart(chart), graphRedrawRate))
+        setSeriesChartRedrawTimeout(setTimeout(_ => redrawSeriesChart(chart), graphRefreshTimeout))
     }
 
     function refreshBarChartColors() {
@@ -132,7 +160,7 @@ export default function SeriesContainer() {
     function drawSeriesChart() {
         const chartData = getSeriesData()
         if (isEmpty(chartData))
-            return setTimeout(drawSeriesChart, graphRedrawRate)
+            return setTimeout(drawSeriesChart, graphRefreshTimeout)
 
         const chart = new Chart({
             container: 'series',
@@ -163,7 +191,7 @@ export default function SeriesContainer() {
         chart.render()
         setSeriesChart(chart)
 
-        setSeriesChartRedrawTimeout(setTimeout(_ => redrawSeriesChart(chart), graphRedrawRate));
+        setSeriesChartRedrawTimeout(setTimeout(_ => redrawSeriesChart(chart), graphRefreshTimeout));
 
     }
 
@@ -189,7 +217,7 @@ export default function SeriesContainer() {
         });
 
         chart.changeData(data)
-        setBarChartRedrawTimeout(setTimeout(_ => redrawBarChart(chart), graphRedrawRate));
+        setBarChartRedrawTimeout(setTimeout(_ => redrawBarChart(chart), graphRefreshTimeout));
     }
 
     function drawBarChart() {
@@ -197,7 +225,7 @@ export default function SeriesContainer() {
         const data = getBarData()
 
         if (isEmpty(data))
-            return setTimeout(drawBarChart, graphRedrawRate)
+            return setTimeout(drawBarChart, graphRefreshTimeout)
 
         const chart = new Chart({
             container: 'bar',
@@ -270,7 +298,7 @@ export default function SeriesContainer() {
         chart.render();
         setBarChart(chart)
 
-        setBarChartRedrawTimeout(setTimeout(_ => redrawBarChart(chart), graphRedrawRate));
+        setBarChartRedrawTimeout(setTimeout(_ => redrawBarChart(chart), graphRefreshTimeout));
     }
 
     return <div className="main-container">
@@ -278,6 +306,7 @@ export default function SeriesContainer() {
             <div className="tweets-search-container">
 
                 <Search
+                    enterButton
                     placeholder="Entre um tema"
                     onSearch={addSocket}
                     value={search}
@@ -302,24 +331,39 @@ export default function SeriesContainer() {
         {!isEmpty(takenColors) && <>
             <Row gutter={[16, 16]}>
                 <Col span={12}>
-                    <div className="map-container">
-                        <div id="map"></div>
-                    </div >
+                    <Card title="Localização" bordered={false}>
+                        <div className="map-container">
+                            <div id="map"></div>
+                        </div >
+                    </Card>
                 </Col>
 
                 <Col span={12}>
-                    <div className="bars-container">
-                        <div id="bar"></div>
-                    </div>
+                    <Card title="Contagem total" bordered={false}>
+                        <div className="bars-container">
+                            <div id="bar"></div>
+                        </div>
+                    </Card>
+
                 </Col>
             </Row>
 
-            <div className="series-container">
-                <div id="series"></div>
-            </div>
+            <Row>
+                <Card title="Contagem temporal" bordered={false}>
+                    <div className="series-container">
+                        <div id="series"></div>
+                    </div>
+                </Card>
+            </Row>
+
+
         </>}
 
-
+        <CountDown
+            className="count-down-refresh"
+            target={targetTime}
+            onEnd={updateAll}
+        />
     </div >
         ;
 

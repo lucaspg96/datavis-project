@@ -3,6 +3,11 @@
     height: 300px;
 }
 
+.ant-page-header-heading-title,
+.ant-page-header-heading-sub-title {
+    color: #dadada;
+}
+
 $pulse-color: gray;
 
 .tweet-map-marker {
@@ -39,17 +44,23 @@ $pulse-color: gray;
 }
 
 .main-container{
-    padding: 20px;
-
-    &>div {
-        margin-bottom: 10px;
-    }
+    padding: 20px 50px;
 
     .tweets-search-container {
         display: flex;
 
         .tweets-search{
             max-width: 300px;
+
+            input {
+                background-color: rgba($color: #dadada, $alpha: 0.1);
+                color: #dadada;
+            }
+
+            button {
+                background-color: black;
+                border: 1px solid white;
+            }
         }
 
         .tags-container{
@@ -59,6 +70,25 @@ $pulse-color: gray;
             .ant-tag {
                 margin-top: 5px;
             }
+        }
+    }
+
+    .ant-card {
+        background-color: #141414;
+        margin-bottom: 20px;
+
+        .ant-card-head{
+            border-bottom: 1px solid rgba($color: #dadada, $alpha: 0.1);
+        }
+
+        .ant-card-head-title {
+            color: #dadada;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        .ant-card-body{
+            padding-top: 5px;
         }
     }
 
