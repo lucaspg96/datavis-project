@@ -199,6 +199,7 @@ export default function SeriesContainer() {
             container: 'bar',
             autoFit: true,
             height: 300,
+            renderer: 'svg'
             // padding: [20, 60]
         });
         // @ts-ignore
@@ -207,14 +208,14 @@ export default function SeriesContainer() {
         chart.legend(false);
         chart.tooltip(true);
         // chart.axis('value', false);
-        chart.axis('key', {
-            animateOption: {
-                update: {
-                    duration: 1000,
-                    easing: 'easeLinear'
-                }
-            }
-        });
+        // chart.axis('key', {
+        //     animateOption: {
+        //         update: {
+        //             duration: 1000,
+        //             easing: 'easeLinear'
+        //         }
+        //     }
+        // });
 
         // chart.annotation().text({
         //     position: ['95%', '10%'],
