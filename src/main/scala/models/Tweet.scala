@@ -10,6 +10,9 @@ case class Tweet(id: Long,
                  date: Long,
                  key: String,
                  userName: String,
+                 retweet: Boolean,
+                 reply: Boolean,
+                 mediasAndLink: Int,
                  position: Option[Seq[Double]],
                  wordCount: Map[String, Int]) {
 
@@ -31,7 +34,7 @@ object Tweet {
       .filterNot(word => word.forall(Character.isDigit))
       .filterNot(word => word.length < 5)
       .filterNot(word => word.startsWith("http"))
-      .map((_,1))
+      .map((_,1.toInt))
       .groupBy(_._1)
       .map{
         case (word, values) => (word, values.map(_._2).sum)
@@ -63,6 +66,9 @@ object Tweet {
       status.getCreatedAt.getTime,
       key,
       status.getUser.getName,
+      status.isRetweet,
+      status.getInReplyToStatusId > -1,
+      status.getMediaEntities.length + status.getURLEntities.length,
       getPosition(status),
       wordCount(status.getText)
     )

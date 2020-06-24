@@ -24,7 +24,7 @@ export default function SeriesContainer() {
     const [seriesChart, setSeriesChart] = useState();
     const [seriesChartRedrawTimeout, setSeriesChartRedrawTimeout] = useState()
 
-    const metrics = useRef({})
+    const metrics = useRef({ users: new Set() })
 
     const [barChart, setBarChart] = useState();
     const [barChartRedrawTimeout, setBarChartRedrawTimeout] = useState()
@@ -46,14 +46,16 @@ export default function SeriesContainer() {
 
     function addSocket(keyword = "") {
         setSearch("")
-        count.current[keyword] = 0;
         const color = colors.filter(c => !takenColors.map(c => c[1]).includes(c))[0]
+        count.current[keyword] = { value: 0, color };
         setTakenColors([...takenColors, [keyword, color]])
         SocketController.addSocket({ keyword, color })
         setTargetTime(new Date().getTime() + graphRefreshTimeout)
     }
 
     function updateAll() {
+        drawSeriesChart()
+        drawBarChart()
         setStatistics({
             users: metrics.current.users.size,
             retweets: metrics.current.retweets,
@@ -67,7 +69,7 @@ export default function SeriesContainer() {
         // series chart listener to collect all tweets
 
         SocketController.addListenner("time", ({ color, key, date }) => {
-            count.current[key] += 1;
+            count.current[key].value += 1;
             data.current.push({ color, key, date });
         });
 
@@ -84,54 +86,16 @@ export default function SeriesContainer() {
             metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + mediasAndLink
 
         })
+
+        MapController.createMap("map");
+        drawSeriesChart();
+        drawBarChart();
     }, [])
 
     useEffect(() => {
         Object.keys(metrics.current).forEach(k => metrics.current[k] = 0)
-        data.current.splice(0, data.current.length)
-        Object.keys(count.current).forEach(k => count.current[k] = 0)
-        if (seriesChart && !isEmpty(takenColors)) {
-            seriesChart.destroy()
-            setSeriesChart();
-        }
-        if (!isEmpty(takenColors)) {
-            try {
-                MapController.createMap("map");
-            } catch (error) {
-                console.log("Map error:", error)
-            }
-            drawSeriesChart();
-            if (!barChart) drawBarChart();
-            else refreshBarChartColors();
-        }
-        else {
-            if (barChart) {
-                barChart.destroy()
-                setBarChart();
-            }
-            if (seriesChartRedrawTimeout) clearTimeout(seriesChartRedrawTimeout)
-            if (barChartRedrawTimeout) clearTimeout(barChartRedrawTimeout)
-        }
+        Object.keys(count.current).forEach(k => count.current[k].key = 0)
     }, [takenColors])
-
-    function redrawSeriesChart(chart) {
-        const data = getSeriesData()
-        chart.changeData(data)
-        setSeriesChartRedrawTimeout(setTimeout(_ => redrawSeriesChart(chart), graphRefreshTimeout))
-    }
-
-    function refreshBarChartColors() {
-        try {
-            barChart.interval()
-                .position('key*value')
-                .color('key', k => {
-                    return (takenColors.filter(c => c[0] === k)[0] || [1, "rgba(0,0,0,0)"])[1];
-                })
-        } catch (error) {
-            console.log("Bar colors error:", error)
-        }
-
-    }
 
     function getSeriesData() {
         if (isEmpty(data.current)) {
@@ -160,7 +124,12 @@ export default function SeriesContainer() {
     function drawSeriesChart() {
         const chartData = getSeriesData()
         if (isEmpty(chartData))
-            return setTimeout(drawSeriesChart, graphRefreshTimeout)
+            return;
+
+        if (seriesChart) {
+            seriesChart.changeData(chartData)
+            return;
+        }
 
         const chart = new Chart({
             container: 'series',
@@ -190,34 +159,12 @@ export default function SeriesContainer() {
 
         chart.render()
         setSeriesChart(chart)
-
-        setSeriesChartRedrawTimeout(setTimeout(_ => redrawSeriesChart(chart), graphRefreshTimeout));
-
     }
 
     function getBarData() {
         return Object.entries(count.current)
-            .map(([key, value]) => ({ key, value }))
+            .map(([key, value]) => ({ ...value, key }))
             .sort((a, b) => a.value < b.value)
-    }
-
-    function redrawBarChart(chart) {
-        const data = getBarData()
-        chart.annotation().clear(true);
-        chart.annotation().text({
-            position: ['95%', '10%'],
-            content: sum(data.map(d => d.value)) + " tweets",
-            style: {
-                fontSize: 40,
-                fontWeight: 'bold',
-                fill: '#ddd',
-                textAlign: 'end'
-            },
-            animate: false,
-        });
-
-        chart.changeData(data)
-        setBarChartRedrawTimeout(setTimeout(_ => redrawBarChart(chart), graphRefreshTimeout));
     }
 
     function drawBarChart() {
@@ -225,7 +172,25 @@ export default function SeriesContainer() {
         const data = getBarData()
 
         if (isEmpty(data))
-            return setTimeout(drawBarChart, graphRefreshTimeout)
+            return;
+
+        if (barChart) {
+            barChart.annotation().clear(true);
+            barChart.annotation().text({
+                position: ['95%', '10%'],
+                content: sum(data.map(d => d.value)) + " tweets",
+                style: {
+                    fontSize: 40,
+                    fontWeight: 'bold',
+                    fill: '#dadada',
+                    textAlign: 'end'
+                },
+                animate: false,
+            });
+
+            barChart.changeData(data)
+            return;
+        }
 
         const chart = new Chart({
             container: 'bar',
@@ -254,7 +219,7 @@ export default function SeriesContainer() {
             style: {
                 fontSize: 40,
                 fontWeight: 'bold',
-                fill: '#ddd',
+                fill: '#dadada',
                 textAlign: 'end'
             },
             animate: false,
@@ -263,27 +228,7 @@ export default function SeriesContainer() {
         chart
             .interval()
             .position('key*value')
-            .color('key', k => {
-                return (takenColors.filter(c => c[0] === k)[0] || [1, "rgba(0,0,0,0)"])[1];
-            })
-            // .label('value', (value) => {
-            //     return {
-            //         animate: {
-            //             appear: {
-            //                 animation: 'label-appear',
-            //                 delay: 0,
-            //                 duration: 500,
-            //                 easing: 'easeLinear'
-            //             },
-            //             update: {
-            //                 animation: 'label-update',
-            //                 duration: 500,
-            //                 easing: 'easeLinear'
-            //             }
-            //         },
-            //         offset: 5,
-            //     };
-            // })
+            .color('color', c => c)
             .animate({
                 appear: {
                     duration: 1000,
@@ -297,8 +242,6 @@ export default function SeriesContainer() {
 
         chart.render();
         setBarChart(chart)
-
-        setBarChartRedrawTimeout(setTimeout(_ => redrawBarChart(chart), graphRefreshTimeout));
     }
 
     return <div className="main-container">
@@ -328,36 +271,35 @@ export default function SeriesContainer() {
             </div>
         </PageHeader>
 
-        {!isEmpty(takenColors) && <>
-            <Row gutter={[16, 16]}>
-                <Col span={12}>
-                    <Card title="Localização" bordered={false}>
-                        <div className="map-container">
-                            <div id="map"></div>
-                        </div >
-                    </Card>
-                </Col>
 
-                <Col span={12}>
-                    <Card title="Contagem total" bordered={false}>
-                        <div className="bars-container">
-                            <div id="bar"></div>
-                        </div>
-                    </Card>
+        <Row gutter={[16, 16]}>
+            <Col span={12}>
+                <Card title="Localização" bordered={false}>
+                    <div className="map-container">
+                        <div id="map"></div>
+                    </div >
+                </Card>
+            </Col>
 
-                </Col>
-            </Row>
-
-            <Row>
-                <Card title="Contagem temporal" bordered={false}>
-                    <div className="series-container">
-                        <div id="series"></div>
+            <Col span={12}>
+                <Card title="Contagem total" bordered={false}>
+                    <div className="bars-container">
+                        <div id="bar"></div>
                     </div>
                 </Card>
-            </Row>
+
+            </Col>
+        </Row>
+
+        <Row>
+            <Card title="Contagem temporal" bordered={false}>
+                <div className="series-container">
+                    <div id="series"></div>
+                </div>
+            </Card>
+        </Row>
 
 
-        </>}
 
         <CountDown
             className="count-down-refresh"
