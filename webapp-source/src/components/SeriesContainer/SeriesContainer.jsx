@@ -10,6 +10,7 @@ import { isEmpty, sum } from 'rambda';
 import * as SocketController from '../../socket/SocketController';
 import * as MapController from '../../map/MapController';
 import CountDown from 'ant-design-pro/lib/CountDown';
+import TweetsStatistics from './TweetsStatistics';
 
 const { Search } = Input;
 
@@ -58,8 +59,9 @@ export default function SeriesContainer() {
         drawBarChart()
         setStatistics({
             users: metrics.current.users.size,
-            retweets: metrics.current.retweets,
-            mediaAndLinks: metrics.current.mediasAndLink
+            retweets: (metrics.current.retweets || 0),
+            mediaAndLinks: metrics.current.mediasAndLink,
+            total: metrics.current.total
         })
 
         setTargetTime(new Date().getTime() + graphRefreshTimeout)
@@ -84,6 +86,7 @@ export default function SeriesContainer() {
             if (retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
             if (reply) metrics.current.replies = (metrics.current.replies || 0) + 1
             metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + mediasAndLink
+            metrics.current.total = (metrics.current.total || 0) + 1
 
         })
 
@@ -176,17 +179,17 @@ export default function SeriesContainer() {
 
         if (barChart) {
             barChart.annotation().clear(true);
-            barChart.annotation().text({
-                position: ['95%', '10%'],
-                content: sum(data.map(d => d.value)) + " tweets",
-                style: {
-                    fontSize: 40,
-                    fontWeight: 'bold',
-                    fill: '#dadada',
-                    textAlign: 'end'
-                },
-                animate: false,
-            });
+            // barChart.annotation().text({
+            //     position: ['95%', '10%'],
+            //     content: sum(data.map(d => d.value)) + " tweets",
+            //     style: {
+            //         fontSize: 40,
+            //         fontWeight: 'bold',
+            //         fill: '#dadada',
+            //         textAlign: 'end'
+            //     },
+            //     animate: false,
+            // });
 
             barChart.changeData(data)
             return;
@@ -213,17 +216,17 @@ export default function SeriesContainer() {
             }
         });
 
-        chart.annotation().text({
-            position: ['95%', '10%'],
-            content: sum(data.map(d => d.value)) + " tweets",
-            style: {
-                fontSize: 40,
-                fontWeight: 'bold',
-                fill: '#dadada',
-                textAlign: 'end'
-            },
-            animate: false,
-        });
+        // chart.annotation().text({
+        //     position: ['95%', '10%'],
+        //     content: sum(data.map(d => d.value)) + " tweets",
+        //     style: {
+        //         fontSize: 40,
+        //         fontWeight: 'bold',
+        //         fill: '#dadada',
+        //         textAlign: 'end'
+        //     },
+        //     animate: false,
+        // });
 
         chart
             .interval()
@@ -270,6 +273,10 @@ export default function SeriesContainer() {
                 </div>
             </div>
         </PageHeader>
+
+        <Card title="Métricas" bordered={false}>
+            <TweetsStatistics statistics={statistics} />
+        </Card>
 
 
         <Row gutter={[16, 16]}>
