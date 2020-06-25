@@ -23,12 +23,10 @@ export default function SeriesContainer() {
     const [targetTime, setTargetTime] = useState();
 
     const [seriesChart, setSeriesChart] = useState();
-    const [seriesChartRedrawTimeout, setSeriesChartRedrawTimeout] = useState()
 
     const metrics = useRef({ users: new Set() })
 
     const [barChart, setBarChart] = useState();
-    const [barChartRedrawTimeout, setBarChartRedrawTimeout] = useState()
 
     const [search, setSearch] = useState("");
 
@@ -61,7 +59,10 @@ export default function SeriesContainer() {
             users: metrics.current.users.size,
             retweets: (metrics.current.retweets || 0),
             mediaAndLinks: metrics.current.mediasAndLink,
-            total: metrics.current.total
+            total: metrics.current.total,
+            mentions: metrics.current.mentions,
+            geolocated: metrics.current.geolocated,
+            replies: metrics.current.replies
         })
 
         setTargetTime(new Date().getTime() + graphRefreshTimeout)
@@ -79,14 +80,15 @@ export default function SeriesContainer() {
             MapController.createMarker(tweet);
         });
 
-        SocketController.addListenner("metrics", ({ userName, retweet, reply, mediasAndLink }) => {
-            if (!metrics.current.users) metrics.current.users = new Set();
-
+        SocketController.addListenner("metrics", ({ userName, retweet, reply, mediasAndLink, mentions, position }) => {
+            if (reply) console.log(reply)
             metrics.current.users.add(userName)
             if (retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
             if (reply) metrics.current.replies = (metrics.current.replies || 0) + 1
+            if (position) metrics.current.geolocated = (metrics.current.geolocated || 0) + 1
             metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + mediasAndLink
             metrics.current.total = (metrics.current.total || 0) + 1
+            metrics.current.mentions = (metrics.current.mentions || 0) + mentions
 
         })
 
@@ -97,6 +99,8 @@ export default function SeriesContainer() {
 
     useEffect(() => {
         Object.keys(metrics.current).forEach(k => metrics.current[k] = 0)
+        metrics.current.users = new Set();
+        data.current.splice(0, data.current.length)
         Object.keys(count.current).forEach(k => count.current[k].key = 0)
     }, [takenColors])
 
@@ -109,12 +113,12 @@ export default function SeriesContainer() {
         const cleanData = data.current.filter(d => d.date.getTime() < now &&
             now - d.date.getTime() < timeWindowSize)
         const facts = crossfilter(cleanData)
-        const dimension = facts.dimension(d => [d.key, d.date])
+        const dimension = facts.dimension(d => [d.key, d.date, d.color])
         const group = dimension.group().reduceSum(_ => 1)
 
         return group.all()
             .sort((a, b) => a.key[1] < b.key[1])
-            .map(d => ({ keyword: d.key[0], date: d.key[1].toLocaleTimeString(), value: d.value }))
+            .map(d => ({ keyword: d.key[0], date: d.key[1].toLocaleTimeString(), color: d.key[2], value: d.value }))
     }
 
     function handleRemove(tag) {
@@ -146,9 +150,7 @@ export default function SeriesContainer() {
         chart
             .line()
             .position('date*value')
-            .color('keyword', k => {
-                return (takenColors.filter(c => c[0] === k)[0] || [1, "rgba(0,0,0,0)"])[1];
-            })
+            .color('color', c => c)
             .label(false)
 
         chart.axis('date', {

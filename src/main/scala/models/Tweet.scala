@@ -13,6 +13,7 @@ case class Tweet(id: Long,
                  retweet: Boolean,
                  reply: Boolean,
                  mediasAndLink: Int,
+                 mentions: Int,
                  position: Option[Seq[Double]],
                  wordCount: Map[String, Int]) {
 
@@ -69,6 +70,7 @@ object Tweet {
       status.isRetweet,
       status.getInReplyToStatusId > -1,
       status.getMediaEntities.length + status.getURLEntities.length,
+      status.getUserMentionEntities.length,
       getPosition(status),
       wordCount(status.getText)
     )
