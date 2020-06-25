@@ -1,5 +1,5 @@
 import React from 'react';
-import './SeriesContainer.scss'
+import './RealTimeContainer.scss'
 import { useRef } from 'react';
 import crossfilter from 'crossfilter';
 import { useState } from 'react';
@@ -17,7 +17,7 @@ const { Search } = Input;
 const graphRefreshTimeout = 1500
 const timeWindowSize = 1 * 60 * 1000
 
-export default function SeriesContainer() {
+export default function RealTimeContainer() {
 
     const [statistics, setStatistics] = useState({});
     const [targetTime, setTargetTime] = useState();
@@ -281,6 +281,12 @@ export default function SeriesContainer() {
             <TweetsStatistics statistics={statistics} />
         </Card>
 
+        <Card title="Contagem temporal" bordered={false}>
+            <div className="series-container">
+                <div id="series"></div>
+            </div>
+        </Card>
+
 
         <Row gutter={[16, 16]}>
             <Col span={12}>
@@ -301,21 +307,12 @@ export default function SeriesContainer() {
             </Col>
         </Row>
 
-        <Row>
-            <Card title="Contagem temporal" bordered={false}>
-                <div className="series-container">
-                    <div id="series"></div>
-                </div>
-            </Card>
-        </Row>
-
-
-
         <CountDown
             className="count-down-refresh"
             target={targetTime}
             onEnd={updateAll}
         />
+
     </div >
         ;
 
