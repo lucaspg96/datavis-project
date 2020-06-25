@@ -15,7 +15,7 @@ import TweetsStatistics from './TweetsStatistics';
 const { Search } = Input;
 
 const graphRefreshTimeout = 1500
-const timeWindowSize = 1 * 60 * 1000
+const timeWindowSize = 0.5 * 60 * 1000
 
 export default function RealTimeContainer() {
 
@@ -32,10 +32,11 @@ export default function RealTimeContainer() {
 
     const colors = [
         "#1F77B4",
-        "#FF7F0E",
-        "#2CA02C",
-        "#9467BD",
-        "#E377C2",
+        "#278944"
+        // "#FF7F0E",
+        // "#2CA02C",
+        // "#9467BD",
+        // "#E377C2",
     ];
 
     const [takenColors, setTakenColors] = useState([]);
@@ -81,7 +82,6 @@ export default function RealTimeContainer() {
         });
 
         SocketController.addListenner("metrics", ({ userName, retweet, reply, mediasAndLink, mentions, position }) => {
-            if (reply) console.log(reply)
             metrics.current.users.add(userName)
             if (retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
             if (reply) metrics.current.replies = (metrics.current.replies || 0) + 1
@@ -116,9 +116,13 @@ export default function RealTimeContainer() {
         const dimension = facts.dimension(d => [d.key, d.date, d.color])
         const group = dimension.group().reduceSum(_ => 1)
 
-        return group.all()
+        const seriesData = group.all()
             .sort((a, b) => a.key[1] < b.key[1])
             .map(d => ({ keyword: d.key[0], date: d.key[1].toLocaleTimeString(), color: d.key[2], value: d.value }))
+
+        // console.log(seriesData)
+
+        return seriesData
     }
 
     function handleRemove(tag) {
@@ -269,7 +273,7 @@ export default function RealTimeContainer() {
                             color={color}
                             onClose={_ => handleRemove(tag)}
                         >
-                            {tag}
+                            <p>{tag}</p>
                         </Tag>
                     )
                     }
