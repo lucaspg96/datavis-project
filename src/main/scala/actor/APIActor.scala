@@ -2,22 +2,24 @@ package actor
 
 import java.io.File
 
-import akka.NotUsed
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.ws.{Message, TextMessage, UpgradeToWebSocket}
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Merge, Sink}
-import akka.stream.{FlowShape, UniformFanInShape, UniformFanOutShape}
+import akka.stream.{ActorMaterializer, FlowShape, UniformFanInShape, UniformFanOutShape}
+import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 import helper.FlowHelper
 import models.Tweet
 import twitter.TwitterSource
-import twitter4j.Status
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
+import scala.concurrent.{Await, ExecutionContext}
+EZA
 class APIActor extends Actor with ActorLogging {
 
   private implicit val system: ActorSystem = context.system
@@ -62,6 +64,17 @@ class APIActor extends Actor with ActorLogging {
         case None => HttpResponse(400, entity = "Requisição websocket inválida!")
       }
 
+    case HttpRequest(GET, Uri.Path("/historical-tweets"), _, _, _) =>
+
+      val tweetObjects = FlowHelper
+        .findAll(ActorMaterializer())
+        .map(seq => seq map(Tweet.format.writes(_).toString()))
+
+      HttpResponse(200, entity = Strict(
+        ContentTypes.`application/json`,
+        ByteString(Await.result(tweetObjects, 1.second).toString)
+      ))
+
     case r: HttpRequest =>
       val path = if(r.uri.path.toString().length <= 1) "/webapp/index.html"
       else r.uri.path.toString()
@@ -71,7 +84,6 @@ class APIActor extends Actor with ActorLogging {
         else ContentTypes.NoContentType
         HttpResponse(entity = HttpEntity.fromFile(ct, file))
       } else HttpResponse(404)
-
   }
 
   private val config = ConfigFactory.load().getConfig("application.http")
