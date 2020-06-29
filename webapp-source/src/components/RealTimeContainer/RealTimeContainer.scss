@@ -68,7 +68,24 @@ $pulse-color: gray;
             margin-left: 20px;
 
             .ant-tag {
-                margin-top: 5px;
+                // margin-top: 5px;
+                padding-top: 4px;
+                height: 32px;
+                
+
+                p {
+                    vertical-align: middle;
+                    margin-bottom: 0px;
+                    display: inline;
+                    font-size: 20px;
+                    font-weight: bold;
+                }
+
+                i {
+                    transform: translateY(-5px) translateX(2px);
+                    font-weight: bolder;
+                    margin-left: 5px;
+                }
             }
         }
     }
