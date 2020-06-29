@@ -9,22 +9,24 @@ import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.ws.{Message, TextMessage, UpgradeToWebSocket}
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Merge, Sink}
-import akka.stream.{ActorMaterializer, FlowShape, UniformFanInShape, UniformFanOutShape}
+import akka.stream.{FlowShape, Materializer, SystemMaterializer, UniformFanInShape, UniformFanOutShape}
 import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 import helper.FlowHelper
 import models.Tweet
+import play.api.libs.json.JsArray
 import twitter.TwitterSource
 
 import scala.concurrent.duration._
-
 import scala.concurrent.{Await, ExecutionContext}
-EZA
+
 class APIActor extends Actor with ActorLogging {
 
   private implicit val system: ActorSystem = context.system
 
   import system._
+
+  private implicit val materializer: Materializer = SystemMaterializer(system).materializer
 
   def generateTwitterDataFlow(hashTag: Option[String])
                              (implicit executionContext: ExecutionContext):Flow[Message, TextMessage, Unit] = {
@@ -67,13 +69,11 @@ class APIActor extends Actor with ActorLogging {
     case HttpRequest(GET, Uri.Path("/historical-tweets"), _, _, _) =>
 
       val tweetObjects = FlowHelper
-        .findAll(ActorMaterializer())
-        .map(seq => seq map(Tweet.format.writes(_).toString()))
+        .findAll(materializer)
+        .map(seq => seq map(Tweet.format.writes))
+        .map(JsArray.apply)
 
-      HttpResponse(200, entity = Strict(
-        ContentTypes.`application/json`,
-        ByteString(Await.result(tweetObjects, 1.second).toString)
-      ))
+      HttpResponse(200, entity = HttpEntity(Await.result(tweetObjects, 1.second).toString))
 
     case r: HttpRequest =>
       val path = if(r.uri.path.toString().length <= 1) "/webapp/index.html"

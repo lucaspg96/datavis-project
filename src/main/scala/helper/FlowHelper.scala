@@ -1,15 +1,13 @@
 package helper
 
-import akka.NotUsed
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.stream.Materializer
 import akka.stream.alpakka.mongodb.scaladsl.{MongoFlow, MongoSource}
-import akka.stream.scaladsl.{Flow, Sink, Source}
-import models.{Tweet, TweetWithGeoLocation, TweetWordCount}
-import twitter4j.Status
+import akka.stream.scaladsl.{Flow, Sink}
+import com.mongodb.reactivestreams.client.{MongoClients, MongoCollection}
+import models.Tweet
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros._
-import com.mongodb.reactivestreams.client.{MongoClients, MongoCollection}
 
 
 object FlowHelper {
@@ -25,7 +23,7 @@ object FlowHelper {
     .map(_.withCleanMap)
       .via(MongoFlow.insertOne[Tweet](tweetsCollection))
 
-  def findAll(implicit m: ActorMaterializer)  =
+  def findAll(implicit m: Materializer)  =
     MongoSource(tweetsCollection.find(classOf[Tweet])).runWith(Sink.seq)
 
 
