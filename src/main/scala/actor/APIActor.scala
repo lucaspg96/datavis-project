@@ -4,7 +4,7 @@ import java.io.File
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpEntity.Strict
+import akka.http.scaladsl.model.headers.{HttpOrigin, `Access-Control-Allow-Origin`}
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.ws.{Message, TextMessage, UpgradeToWebSocket}
 import akka.http.scaladsl.model._
@@ -14,8 +14,8 @@ import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 import helper.FlowHelper
 import models.Tweet
-import play.api.libs.json.JsArray
-import twitter.TwitterSource
+import play.api.libs.json.{JsArray, JsNumber, JsObject, Json}
+import twitter.{TwitterSource, TwitterTrends}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
@@ -73,7 +73,22 @@ class APIActor extends Actor with ActorLogging {
         .map(seq => seq map(Tweet.format.writes))
         .map(JsArray.apply)
 
-      HttpResponse(200, entity = HttpEntity(Await.result(tweetObjects, 1.second).toString))
+      HttpResponse(200,
+        entity = HttpEntity(Await.result(tweetObjects, 1.second).toString))
+
+    case HttpRequest(GET, Uri.Path("/trends"), _, _, _) =>
+
+      val trends = TwitterTrends()
+      val payload = JsObject(trends.map{case (k,v) => (k,JsNumber(v))}).toString()
+
+      HttpResponse(200,
+        headers = Seq(`Access-Control-Allow-Origin`.*),
+        entity = HttpEntity(payload)
+      )
+
+    case HttpRequest(OPTIONS, _, _, _, _) => HttpResponse(200,
+      headers = Seq(`Access-Control-Allow-Origin`.*)
+    )
 
     case r: HttpRequest =>
       val path = if(r.uri.path.toString().length <= 1) "/webapp/index.html"

@@ -7,10 +7,11 @@ import { useEffect } from 'react';
 import { Input, Spin, Tag, PageHeader, Row, Col, Card } from 'antd';
 import { Chart } from '@antv/g2';
 import { isEmpty, sum } from 'rambda';
-import * as SocketController from '../../socket/SocketController';
+import * as SocketController from '../../services/SocketController';
 import * as MapController from '../../map/MapController';
 import CountDown from 'ant-design-pro/lib/CountDown';
 import TweetsStatistics from './TweetsStatistics';
+import TrendsContainer from './TrendsContainer';
 
 const { Search } = Input;
 
@@ -46,6 +47,7 @@ export default function RealTimeContainer() {
 
     function addSocket(keyword = "") {
         setSearch("")
+        console.log("socket:", keyword)
         const color = colors.filter(c => !takenColors.map(c => c[1]).includes(c))[0]
         count.current[keyword] = { value: 0, color };
         setTakenColors([...takenColors, [keyword, color]])
@@ -256,11 +258,16 @@ export default function RealTimeContainer() {
 
     return <div className="main-container">
         <PageHeader title="Tweets monitor" subTitle="Monitore assuntos em tempo real (ou quase isso)">
-            <div className="tweets-search-container">
 
+            <div className="trends-container">
+                <TrendsContainer onClick={addSocket} disabled={takenColors.length == 2} />
+            </div>
+
+            <div className="tweets-search-container">
                 <Search
                     enterButton
-                    placeholder="Entre um tema"
+                    disabled={takenColors.length == 2}
+                    placeholder="Ou entre seu"
                     onSearch={addSocket}
                     value={search}
                     onChange={e => setSearch(e.target.value)}

@@ -1,4 +1,4 @@
-import websocketURL from './index';
+import { websocketURL } from './index';
 
 const sockets = {}
 const listenners = {}
