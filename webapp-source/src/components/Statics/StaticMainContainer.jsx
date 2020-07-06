@@ -11,14 +11,15 @@ import _ from 'lodash';
 import * as MapController from '../../map/MapController';
 import './StaticMainContainer.scss';
 
-import data from './data.json';
+// import data from './data.json';
 import TweetsStatistics from '../RealTimeContainer/TweetsStatistics';
 import TwitterService from '../../services/TwitterService';
 
 const { Search } = Input;
-const timeWindowSize = 0.5 * 60 * 1000
 
 export function StaticMainContainer() {
+
+    const [data, setData] = useState();
 
     const colors = [
         "#1F77B4",
@@ -32,13 +33,17 @@ export function StaticMainContainer() {
     const metrics = useRef({ users: new Set() })
     const [coloredKeys, setColors] = useState([]);
 
+    useEffect(() => {
+        TwitterService.find().then(setData)
+    }, [])
 
     useEffect(() => {
-        init();
-    }, [])
+        if (data) init();
+    }, [data])
 
     //** Initializations */
     function init() {
+
         colorByKey();
         MapController.createMap("map");
         drawBarChart();

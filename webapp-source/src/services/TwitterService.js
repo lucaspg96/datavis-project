@@ -1,12 +1,13 @@
 import axios from 'axios';
+import { apiURL } from '.';
 
-let API_URL = process.env.REACT_APP_API_URL;
+let API_URL = apiURL;
 
-const service = axios.create({baseURL: API_URL});
+const service = axios.create({ baseURL: API_URL });
 export default {
 
     find() {
-        return service.get();
+        return service.get("/historical-tweets").then(res => res.data)
     }
 
 }

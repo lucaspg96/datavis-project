@@ -70,11 +70,13 @@ class APIActor extends Actor with ActorLogging {
 
       val tweetObjects = FlowHelper
         .findAll(materializer)
-        .map(seq => seq map(Tweet.format.writes))
-        .map(JsArray.apply)
+        .map(_.mkString("[",",","]"))
+//        .map(seq => seq map(Tweet.format.writes))
+//        .map(JsArray.apply)
 
       HttpResponse(200,
-        entity = HttpEntity(Await.result(tweetObjects, 1.second).toString))
+        headers = Seq(`Access-Control-Allow-Origin`.*),
+        entity = HttpEntity(Await.result(tweetObjects, 10.second).toString))
 
     case HttpRequest(GET, Uri.Path("/trends"), _, _, _) =>
 

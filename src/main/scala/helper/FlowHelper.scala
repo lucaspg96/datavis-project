@@ -6,9 +6,11 @@ import akka.stream.alpakka.mongodb.scaladsl.{MongoFlow, MongoSource}
 import akka.stream.scaladsl.{Flow, Sink}
 import com.mongodb.reactivestreams.client.{MongoClients, MongoCollection}
 import models.Tweet
+import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.Macros._
+import org.mongodb.scala.bson.conversions.Bson
 
 
 object FlowHelper {
@@ -27,7 +29,10 @@ object FlowHelper {
 //    .addAttributes(Attributes.logLevels(onElement = LogLevels.Info))
 
   def findAll(implicit m: Materializer)  =
-    MongoSource(tweetsCollection.find(classOf[Tweet])).runWith(Sink.seq)
+    MongoSource(tweetsCollection.find(classOf[BsonDocument]))
+//    .log("mongo-query")
+//    .addAttributes(Attributes.logLevels(onElement = LogLevels.Info))
+      .runWith(Sink.seq)
 
 
 

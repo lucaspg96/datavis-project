@@ -13,7 +13,7 @@ object StreamTest {
   import system._
 
   def main(args: Array[String]): Unit = {
-    val (source, _) = TwitterSource.createSource("covid")
+    val (source, _) = TwitterSource.createSource("#TrumpVirus")
 
     source
       .filter(_.isGeolocated)
