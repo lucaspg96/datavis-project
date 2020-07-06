@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { Chart } from '@antv/g2';
 import { groupBy, map } from 'lodash';
+import * as d3 from "d3";
 import _ from 'lodash';
 
 import * as MapController from '../../map/MapController';
@@ -14,6 +15,7 @@ import './StaticMainContainer.scss';
 // import data from './data.json';
 import TweetsStatistics from '../RealTimeContainer/TweetsStatistics';
 import TwitterService from '../../services/TwitterService';
+import { barChart } from 'dc';
 
 const { Search } = Input;
 
@@ -21,41 +23,50 @@ export function StaticMainContainer() {
 
     const [data, setData] = useState();
 
-    const colors = [
-        "#1F77B4",
-        "#FF7F0E",
-        "#2CA02C",
-        "#9467BD",
-        "#E377C2",
-    ];
+    const [selectedKeys, setSelectedKeys] = useState([])
+    const keyFilter = t => selectedKeys.length === 0 || selectedKeys.includes(t.key)
+
+    const [barChart, setBarChart] = useState()
+
+    const filteredData = (data || []).filter(keyFilter)
+
+    const colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"]
 
     const [statistics, setStatistics] = useState({});
     const metrics = useRef({ users: new Set() })
     const [coloredKeys, setColors] = useState([]);
 
     useEffect(() => {
-        TwitterService.find().then(setData)
+        /** Backend's Request to get historical tweets*/
+        TwitterService.find().then(data => setData(addColorToData(data)))
     }, [])
 
     useEffect(() => {
         if (data) init();
     }, [data])
 
+    useEffect(() => {
+        MapController.clearMarkers()
+        draw()
+    }, [selectedKeys])
+
     //** Initializations */
     function init() {
-
-        colorByKey();
         MapController.createMap("map");
-        drawBarChart();
-        drawSeriesChart();
-        configStats();
-        addMarkers();
-        console.log(coloredKeys);
+        draw();
     }
 
-    /** Backend's Request to get historical tweets*/
-    function getStaticData() {
-        return TwitterService.find();
+    function draw() {
+
+        if (barChart) barChart.destroy()
+
+        if (data) {
+            drawBarChart();
+            drawSeriesChart();
+            configStats();
+            addMarkers();
+        }
+
     }
 
     /**
@@ -82,9 +93,17 @@ export function StaticMainContainer() {
         barChart.tooltip(true);
         barChart.interval()
             .position('key*value')
-            .color('color', color => color)
+            .color('key', key => coloredKeys[key])
+
+        barChart.on("click", e => {
+            const { key } = e.data.data
+
+            if (selectedKeys.includes(key)) setSelectedKeys(selectedKeys.filter(k => k != key))
+            else setSelectedKeys([...selectedKeys, key])
+        })
 
         barChart.render();
+        setBarChart(barChart)
     }
 
     /** Series Chart */
@@ -99,8 +118,6 @@ export function StaticMainContainer() {
         })
 
         chart.data(chartData)
-
-        console.log(chartData);
 
         chart
             .line()
@@ -129,7 +146,7 @@ export function StaticMainContainer() {
 
     /** Process data to Bar Chart */
     function getBarData() {
-        const groupedData = _(data)
+        const groupedData = _(filteredData)
             .groupBy(tweet => tweet.key)
             .map(tweet => _.merge({
                 key: tweet[0].key,
@@ -145,7 +162,7 @@ export function StaticMainContainer() {
     /** Process data to Series Chart */
     function getSeriesData() {
         const now = new Date();
-        const cleanData = data.filter(d => new Date(d.date) < now)
+        const cleanData = filteredData.filter(d => new Date(d.date) < now)
         const facts = crossfilter(cleanData)
         //const dimension = facts.dimension(d => [d.key, d.date, d.color])
         const dimension = facts.dimension(d => [d.key, new Date(d.date)])
@@ -161,7 +178,7 @@ export function StaticMainContainer() {
 
     /** Satistics */
     function configStats() {
-        data.forEach(function (tweet) {
+        filteredData.forEach(function (tweet) {
             metrics.current.users.add(tweet.userName);
             if (tweet.retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
             if (tweet.reply) metrics.current.replies = (metrics.current.replies || 0) + 1
@@ -193,21 +210,28 @@ export function StaticMainContainer() {
 
     }
 
-    function colorByKey() {
-        const cKeys = _(data)
-            .groupBy(tweet => tweet.key)
-            .map(tweet => _.merge({
-                key: tweet[0].key
-            }))
-            .value();
-        attachColor(cKeys);
-        setColors(cKeys);
+    function addColorToData(data) {
+        const keyColor = {}
+        let i = 0
+
+        const newData = data.map(t => {
+            if (keyColor[t.key]) return { ...t, color: keyColor[t.key] }
+            else {
+                if (i > colors.length - 1) return t
+                keyColor[t.key] = colors[i]
+                i += 1
+                return { ...t, color: keyColor[t.key] }
+            }
+        }).filter(t => t.color)
+
+        setColors(keyColor);
+        return newData
     }
 
 
     /** Add markers to map */
     function addMarkers() {
-        data
+        filteredData
             .forEach(function (tweet) {
                 tweet.date = new Date(tweet.date);
                 MapController.createMarker(tweet, _, true);
