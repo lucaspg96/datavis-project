@@ -104,6 +104,7 @@ export default function RealTimeContainer() {
         metrics.current.users = new Set();
         data.current.splice(0, data.current.length)
         Object.keys(count.current).forEach(k => count.current[k].key = 0)
+        MapController.clearMarkers();
     }, [takenColors])
 
     function getSeriesData() {
@@ -156,8 +157,15 @@ export default function RealTimeContainer() {
         chart
             .line()
             .position('date*value')
-            .color('color', c => c)
+            .color('keyword', k => {
+                return takenColors.filter(c => c[0] === k)[0][1]
+            })
             .label(false)
+
+        chart.tooltip({
+            showCrosshairs: true,
+            shared: true,
+        });
 
         chart.axis('date', {
             animateOption: {

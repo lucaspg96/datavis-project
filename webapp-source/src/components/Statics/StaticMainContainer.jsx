@@ -5,7 +5,7 @@ import crossfilter from 'crossfilter';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { Chart } from '@antv/g2';
-import {groupBy, map} from 'lodash';
+import { groupBy, map } from 'lodash';
 import _ from 'lodash';
 
 import * as MapController from '../../map/MapController';
@@ -38,7 +38,7 @@ export function StaticMainContainer() {
     }, [])
 
     //** Initializations */
-    function init(){
+    function init() {
         colorByKey();
         MapController.createMap("map");
         drawBarChart();
@@ -49,7 +49,7 @@ export function StaticMainContainer() {
     }
 
     /** Backend's Request to get historical tweets*/
-    function getStaticData(){
+    function getStaticData() {
         return TwitterService.find();
     }
 
@@ -60,7 +60,7 @@ export function StaticMainContainer() {
     */
 
     /** Bar Chart */
-    function drawBarChart(){
+    function drawBarChart() {
 
         const barChart = new Chart({
             container: 'bar',
@@ -68,7 +68,7 @@ export function StaticMainContainer() {
             height: 300,
             renderer: 'svg'
         });
-        
+
         const barData = getBarData();
 
         barChart.data(barData);
@@ -76,14 +76,14 @@ export function StaticMainContainer() {
         barChart.legend(false);
         barChart.tooltip(true);
         barChart.interval()
-                .position('key*value')
-                .color('color', color => color)
+            .position('key*value')
+            .color('color', color => color)
 
         barChart.render();
     }
 
     /** Series Chart */
-    function drawSeriesChart(){
+    function drawSeriesChart() {
 
         const chartData = getSeriesData();
         const chart = new Chart({
@@ -120,17 +120,17 @@ export function StaticMainContainer() {
      * ###########  Processing Data  ###########
      * 
     */
-   
+
 
     /** Process data to Bar Chart */
-    function getBarData(){
+    function getBarData() {
         const groupedData = _(data)
-                            .groupBy(tweet => tweet.key)
-                            .map(tweet => _.merge({
-                                key: tweet[0].key, 
-                                value: tweet.length
-                            }))
-                            .value();
+            .groupBy(tweet => tweet.key)
+            .map(tweet => _.merge({
+                key: tweet[0].key,
+                value: tweet.length
+            }))
+            .value();
 
         attachColor(groupedData);
 
@@ -138,7 +138,7 @@ export function StaticMainContainer() {
     }
 
     /** Process data to Series Chart */
-    function getSeriesData(){
+    function getSeriesData() {
         const now = new Date();
         const cleanData = data.filter(d => new Date(d.date) < now)
         const facts = crossfilter(cleanData)
@@ -146,7 +146,7 @@ export function StaticMainContainer() {
         const dimension = facts.dimension(d => [d.key, new Date(d.date)])
         const group = dimension.group().reduceSum(_ => 1)
 
-        debugger;
+        // debugger;
 
         const seriesData = group.all()
             .sort((a, b) => a.key[1] < b.key[1])
@@ -155,8 +155,8 @@ export function StaticMainContainer() {
     }
 
     /** Satistics */
-    function configStats(){
-        data.forEach(function(tweet) {
+    function configStats() {
+        data.forEach(function (tweet) {
             metrics.current.users.add(tweet.userName);
             if (tweet.retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
             if (tweet.reply) metrics.current.replies = (metrics.current.replies || 0) + 1
@@ -181,32 +181,32 @@ export function StaticMainContainer() {
      * ###########  Auxiliary Functions  ###########
      * 
     */
-   
+
     /** Attach color */
-    function attachColor(data){
+    function attachColor(data) {
         data.forEach((value, idx) => value.color = colors[idx]);
 
     }
 
-    function colorByKey(){
+    function colorByKey() {
         const cKeys = _(data)
-                            .groupBy(tweet => tweet.key)
-                            .map(tweet => _.merge({
-                                key: tweet[0].key
-                            }))
-                            .value();
+            .groupBy(tweet => tweet.key)
+            .map(tweet => _.merge({
+                key: tweet[0].key
+            }))
+            .value();
         attachColor(cKeys);
         setColors(cKeys);
     }
 
 
     /** Add markers to map */
-    function addMarkers(){
-        data.filter(tweet => tweet.position)
-            .forEach(function(tweet) { 
+    function addMarkers() {
+        data
+            .forEach(function (tweet) {
                 tweet.date = new Date(tweet.date);
-                MapController.createMarker(tweet, _,true);
-        });
+                MapController.createMarker(tweet, _, true);
+            });
     }
 
 
