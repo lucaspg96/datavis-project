@@ -1,6 +1,7 @@
 package helper
 
-import akka.stream.Materializer
+import akka.stream.Attributes.LogLevels
+import akka.stream.{Attributes, Materializer}
 import akka.stream.alpakka.mongodb.scaladsl.{MongoFlow, MongoSource}
 import akka.stream.scaladsl.{Flow, Sink}
 import com.mongodb.reactivestreams.client.{MongoClients, MongoCollection}
@@ -22,6 +23,8 @@ object FlowHelper {
   def mongoInsertionFlow = Flow[Tweet]
     .map(_.withCleanMap)
       .via(MongoFlow.insertOne[Tweet](tweetsCollection))
+//    .log("mongo-insert")
+//    .addAttributes(Attributes.logLevels(onElement = LogLevels.Info))
 
   def findAll(implicit m: Materializer)  =
     MongoSource(tweetsCollection.find(classOf[Tweet])).runWith(Sink.seq)

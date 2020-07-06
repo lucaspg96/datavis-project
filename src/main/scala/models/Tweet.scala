@@ -19,7 +19,10 @@ case class Tweet(id: Long,
 
   def isGeolocated: Boolean = position.isDefined
 
-  def withCleanMap: Tweet = this.copy(wordCount = Map.empty)
+  def withCleanMap: Tweet = {
+    //this.copy(wordCount = Map.empty)
+    this.copy(wordCount = wordCount.filterNot(_._1.startsWith("$")))
+  }
 
 }
 
