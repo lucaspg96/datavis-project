@@ -5,16 +5,18 @@ import crossfilter from 'crossfilter';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { Chart } from '@antv/g2';
-import {groupBy} from 'lodash';
+import {groupBy, map} from 'lodash';
 import _ from 'lodash';
 
 import * as MapController from '../../map/MapController';
 import './StaticMainContainer.scss';
 
 import data from './data.json';
-import TweetsStatistics from '../SeriesContainer/TweetsStatistics';
+import TweetsStatistics from '../RealTimeContainer/TweetsStatistics';
+import TwitterService from '../../services/TwitterService';
 
 const { Search } = Input;
+const timeWindowSize = 0.5 * 60 * 1000
 
 export function StaticMainContainer() {
 
@@ -28,17 +30,36 @@ export function StaticMainContainer() {
 
     const [statistics, setStatistics] = useState({});
     const metrics = useRef({ users: new Set() })
+    const [coloredKeys, setColors] = useState([]);
 
 
     useEffect(() => {
-        MapController.createMap("map");
-        drawBarChart();
-        configStats();
-        addMarkers();
+        init();
     }, [])
 
+    //** Initializations */
+    function init(){
+        colorByKey();
+        MapController.createMap("map");
+        drawBarChart();
+        drawSeriesChart();
+        configStats();
+        addMarkers();
+        console.log(coloredKeys);
+    }
 
-     /** Bar Chart */
+    /** Backend's Request to get historical tweets*/
+    function getStaticData(){
+        return TwitterService.find();
+    }
+
+    /**
+     * 
+     * ###########  Draw Charts  ###########
+     * 
+    */
+
+    /** Bar Chart */
     function drawBarChart(){
 
         const barChart = new Chart({
@@ -61,19 +82,76 @@ export function StaticMainContainer() {
         barChart.render();
     }
 
+    /** Series Chart */
+    function drawSeriesChart(){
 
-    /** @TODO implementar cores */
+        const chartData = getSeriesData();
+        const chart = new Chart({
+            container: 'series',
+            autoFit: true,
+            height: 200,
+            renderer: 'svg'
+        })
+
+        chart.data(chartData)
+
+        console.log(chartData);
+
+        chart
+            .line()
+            .position('date*value')
+            .color('color', color => '#E377C2')
+            .label(false)
+
+        chart.axis('date', {
+            animateOption: {
+                update: {
+                    duration: 1000,
+                    easing: 'easeLinear'
+                }
+            }
+        });
+
+        chart.render();
+    }
+
+    /**
+     * 
+     * ###########  Processing Data  ###########
+     * 
+    */
+   
+
+    /** Process data to Bar Chart */
     function getBarData(){
-
         const groupedData = _(data)
                             .groupBy(tweet => tweet.key)
                             .map(tweet => _.merge({
                                 key: tweet[0].key, 
-                                value: tweet.length,
-                                color: colors[0]
-                            })).value();
+                                value: tweet.length
+                            }))
+                            .value();
+
+        attachColor(groupedData);
 
         return _.sortBy(groupedData, tweets => tweets.value);
+    }
+
+    /** Process data to Series Chart */
+    function getSeriesData(){
+        const now = new Date();
+        const cleanData = data.filter(d => new Date(d.date) < now)
+        const facts = crossfilter(cleanData)
+        //const dimension = facts.dimension(d => [d.key, d.date, d.color])
+        const dimension = facts.dimension(d => [d.key, new Date(d.date)])
+        const group = dimension.group().reduceSum(_ => 1)
+
+        debugger;
+
+        const seriesData = group.all()
+            .sort((a, b) => a.key[1] < b.key[1])
+            .map(d => ({ keyword: d.key[0], date: d.key[1].toLocaleDateString(), color: d.key[2], value: d.value }))
+        return seriesData
     }
 
     /** Satistics */
@@ -98,15 +176,41 @@ export function StaticMainContainer() {
         })
     }
 
+    /**
+     * 
+     * ###########  Auxiliary Functions  ###########
+     * 
+    */
+   
+    /** Attach color */
+    function attachColor(data){
+        data.forEach((value, idx) => value.color = colors[idx]);
+
+    }
+
+    function colorByKey(){
+        const cKeys = _(data)
+                            .groupBy(tweet => tweet.key)
+                            .map(tweet => _.merge({
+                                key: tweet[0].key
+                            }))
+                            .value();
+        attachColor(cKeys);
+        setColors(cKeys);
+    }
+
+
     /** Add markers to map */
     function addMarkers(){
         data.filter(tweet => tweet.position)
             .forEach(function(tweet) { 
                 tweet.date = new Date(tweet.date);
-                MapController.createMarker(tweet);
+                MapController.createMarker(tweet, _,true);
         });
     }
 
+
+    /** Render */
 
     return (
         <div className="main-container">
@@ -122,6 +226,11 @@ export function StaticMainContainer() {
                 <TweetsStatistics statistics={statistics} />
             </Card>
 
+            <Card title="Contagem temporal" bordered={false}>
+                <div className="series-container">
+                    <div id="series"></div>
+                </div>
+            </Card>
             <Row gutter={[16, 16]}>
                 <Col span={12}>
                     <Card title="Localização" bordered={false}>

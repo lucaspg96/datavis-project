@@ -34,7 +34,7 @@ function createPopup(tweet) {
     );
 }
 
-export function createMarker(tweet, duration = 20000) {
+export function createMarker(tweet, duration = 20000, staticMap = false) {
     if (tweet.position) {
 
         const marker = L.marker(tweet.position, {
@@ -48,7 +48,9 @@ export function createMarker(tweet, duration = 20000) {
             .bindPopup(createPopup(tweet))
 
         setTimeout(() => {
-            marker.remove()
+            if (!staticMap) {
+                marker.remove()
+            }
         }, duration)
     }
 
