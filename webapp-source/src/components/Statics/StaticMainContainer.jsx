@@ -27,6 +27,7 @@ export function StaticMainContainer() {
     const keyFilter = t => selectedKeys.length === 0 || selectedKeys.includes(t.key)
 
     const [barChart, setBarChart] = useState()
+    const [seriesChart, setSeriesChart] = useState()
 
     const filteredData = (data || []).filter(keyFilter)
 
@@ -38,7 +39,10 @@ export function StaticMainContainer() {
 
     useEffect(() => {
         /** Backend's Request to get historical tweets*/
-        TwitterService.find().then(data => setData(addColorToData(data)))
+        TwitterService.find().then(data => {
+            data.forEach(d => d.date = new Date(Number(d.date.$numberLong)));
+            setData(addColorToData(data))
+        })
     }, [])
 
     useEffect(() => {
@@ -59,6 +63,7 @@ export function StaticMainContainer() {
     function draw() {
 
         if (barChart) barChart.destroy()
+        if (seriesChart) seriesChart.destroy()
 
         if (data) {
             drawBarChart();
@@ -85,11 +90,12 @@ export function StaticMainContainer() {
             renderer: 'svg'
         });
 
+
         const barData = getBarData();
 
         barChart.data(barData);
         barChart.coordinate('rect').transpose();
-        barChart.legend(false);
+        barChart.legend(true);
         barChart.tooltip(true);
         barChart.interval()
             .position('key*value')
@@ -102,7 +108,7 @@ export function StaticMainContainer() {
             else setSelectedKeys([...selectedKeys, key])
         })
 
-        barChart.render();
+        barChart.render();        
         setBarChart(barChart)
     }
 
@@ -110,22 +116,22 @@ export function StaticMainContainer() {
     function drawSeriesChart() {
 
         const chartData = getSeriesData();
-        const chart = new Chart({
+        const seriesChart = new Chart({
             container: 'series',
             autoFit: true,
             height: 200,
             renderer: 'svg'
         })
 
-        chart.data(chartData)
+        seriesChart.data(chartData)
 
-        chart
+        seriesChart
             .line()
             .position('date*value')
-            .color('color', color => '#E377C2')
+            .color('color', color => color)
             .label(false)
 
-        chart.axis('date', {
+        seriesChart.axis('date', {
             animateOption: {
                 update: {
                     duration: 1000,
@@ -134,7 +140,8 @@ export function StaticMainContainer() {
             }
         });
 
-        chart.render();
+        seriesChart.render();
+        setSeriesChart(seriesChart)
     }
 
     /**
@@ -161,18 +168,13 @@ export function StaticMainContainer() {
 
     /** Process data to Series Chart */
     function getSeriesData() {
-        const now = new Date();
-        const cleanData = filteredData.filter(d => new Date(d.date) < now)
-        const facts = crossfilter(cleanData)
-        //const dimension = facts.dimension(d => [d.key, d.date, d.color])
-        const dimension = facts.dimension(d => [d.key, new Date(d.date)])
+        const facts = crossfilter(filteredData)
+        const dimension = facts.dimension(d => [d.key, d.date, d.color])
         const group = dimension.group().reduceSum(_ => 1)
-
-        // debugger;
 
         const seriesData = group.all()
             .sort((a, b) => a.key[1] < b.key[1])
-            .map(d => ({ keyword: d.key[0], date: d.key[1].toLocaleDateString(), color: d.key[2], value: d.value }))
+            .map(d => ({ keyword: d.key[0], date: new Date(d.key[1]).toLocaleString(), color: d.key[2], value: d.value }))
         return seriesData
     }
 
