@@ -16,9 +16,10 @@ import './StaticMainContainer.scss';
 // import data from './data.json';
 import TweetsStatistics from '../RealTimeContainer/TweetsStatistics';
 import TwitterService from '../../services/TwitterService';
-import { barChart } from 'dc';
 
 const { Search } = Input;
+
+const maxWords = 50;
 
 export function StaticMainContainer() {
 
@@ -29,6 +30,7 @@ export function StaticMainContainer() {
 
     const [barChart, setBarChart] = useState()
     const [seriesChart, setSeriesChart] = useState()
+    const [wordChart, setWordChart] = useState()
 
     const filteredData = (data || []).filter(keyFilter)
 
@@ -65,6 +67,7 @@ export function StaticMainContainer() {
 
         if (barChart) barChart.destroy()
         if (seriesChart) seriesChart.destroy()
+        if (wordChart) wordChart.destroy()
 
         if (data) {
             drawBarChart();
@@ -82,45 +85,55 @@ export function StaticMainContainer() {
      * 
     */
 
-   function getTextAttrs(cfg) {
+    function getTextAttrs(cfg) {
         return {
-        ...cfg.style,
-        fontSize: cfg.data.size,
-        text: cfg.data.text,
-        textAlign: 'center',
-        fontFamily: cfg.data.font,
-        fill: cfg.color,
-        textBaseline: 'Alphabetic'
+            ...cfg.style,
+            fontSize: cfg.data.size,
+            text: cfg.data.text,
+            textAlign: 'center',
+            fontFamily: cfg.data.font,
+            fill: cfg.color,
+            textBaseline: 'Alphabetic'
         };
     }
 
-   registerShape('point', 'cloud', {
+    registerShape('point', 'cloud', {
         draw(cfg, container) {
-        const attrs = getTextAttrs(cfg);
-        const textShape = container.addShape('text', {
-            attrs: {
-            ...attrs,
-            x: cfg.x,
-            y: cfg.y
+            const attrs = getTextAttrs(cfg);
+            const textShape = container.addShape('text', {
+                attrs: {
+                    ...attrs,
+                    x: cfg.x,
+                    y: cfg.y
+                }
+            });
+            if (cfg.data.rotate) {
+                Util.rotate(textShape, cfg.data.rotate * Math.PI / 180);
             }
-        });
-        if (cfg.data.rotate) {
-            Util.rotate(textShape, cfg.data.rotate * Math.PI / 180);
-        }
-        return textShape;
+            return textShape;
         }
     });
 
-    /** Word Cloud */ 
-    function drawWordChart(){
+    /** Word Cloud */
+    function drawWordChart() {
         const dv = configWorldCloud();
+        const [min, max] = dv.range('value');
+
+        const blues = d3.schemeBlues[8].splice(3, 4)
+        console.log(blues)
+        const colorRange = d3.scaleQuantize()
+            .domain([min, max])
+            .range(blues)
+
+        console.log(colorRange(min), colorRange(max))
+
         const chart = new Chart({
             container: 'word-cloud',
             autoFit: true,
             height: 300,
             padding: 0
         });
-        
+
         chart.data(dv.rows);
         chart.scale({
             x: { nice: false },
@@ -135,25 +148,30 @@ export function StaticMainContainer() {
         chart.coordinate().reflect();
         chart.point()
             .position('x*y')
-            .color('text')
+            .color('value', v => {
+
+                return colorRange(v)
+            })
             .shape('cloud');
         chart.render();
+
+        setWordChart(chart)
     }
 
-    function configWorldCloud(){
-        const d = getBarData();
-        const dv = new DataSet.View().source(d);
-        const range = dv.range('value');
-        const min = range[0];
-        const max = range[1];
+    function configWorldCloud() {
+        const wc = getWordCount()
+        const dv = new DataSet.View().source(wc);
 
+        const [min, max] = dv.range('value');
+        const mean = 10
         dv.transform({
+            spiral: 'rectangular',
             type: 'tag-cloud',
             fields: ['key', 'value'],
-            font: 'Verdana',
-            size: [200, 300],
+            font: 'serif',
+            size: [600, 300],
             padding: 0,
-            timeInterval: 5000, 
+            timeInterval: Infinity,
             rotate() {
                 let random = ~~(Math.random() * 4) % 4;
                 if (random === 2) {
@@ -162,9 +180,11 @@ export function StaticMainContainer() {
                 return random * 90; // 0, 90, 270
             },
             fontSize(d) {
-                return ((d.value - min) / (max - min)) * (32 - 8) + 8;
+                const [minFont, maxFont] = [24, 80]
+                const size = ((d.value - min) / (max - min)) * (maxFont - minFont) + minFont
+                return size;
             }
-        });  
+        });
         return dv;
     }
 
@@ -196,8 +216,8 @@ export function StaticMainContainer() {
             else setSelectedKeys([...selectedKeys, key])
         })
 
-        
-        barChart.render();        
+
+        barChart.render();
         setBarChart(barChart)
     }
 
@@ -217,7 +237,7 @@ export function StaticMainContainer() {
         seriesChart
             .line()
             .position('date*value')
-            .color('color', color => color)
+            .color('keyword', key => coloredKeys[key])
             .label(false)
 
         seriesChart.axis('date', {
@@ -232,7 +252,7 @@ export function StaticMainContainer() {
         seriesChart.render();
         setSeriesChart(seriesChart)
     }
-    
+
 
     /**
      * 
@@ -250,8 +270,6 @@ export function StaticMainContainer() {
                 value: tweet.length
             }))
             .value();
-
-        attachColor(groupedData);
 
         return _.sortBy(groupedData, tweets => tweets.value);
     }
@@ -296,12 +314,6 @@ export function StaticMainContainer() {
      * 
     */
 
-    /** Attach color */
-    function attachColor(data) {
-        data.forEach((value, idx) => value.color = colors[idx]);
-
-    }
-
     function addColorToData(data) {
         const keyColor = {}
         let i = 0
@@ -330,48 +342,73 @@ export function StaticMainContainer() {
             });
     }
 
+    function getWordCount() {
+        const wc = {}
+
+        filteredData.forEach(({ wordCount }) => {
+            Object.entries(wordCount).map(([word, count]) => wc[word] = count + (wc[word] || 0))
+        })
+
+        const wordCount = Object.entries(wc)
+            .map(([key, value]) => ({ key, value }))
+
+        wordCount.sort((a, b) => b.value - a.value)
+
+        if (wordCount.length <= maxWords) return wordCount
+        else return wordCount.slice(0, maxWords)
+    }
+
 
     /** Render */
 
     return (
         <div className="main-container">
-            <PageHeader title="Tweets monitor" subTitle="Monitore assuntos em tempo real (ou quase isso)">
-                <div className="tweets-search-container">
+            <PageHeader title="Tweets Analiser" subTitle="Análise histórica dos tweets consumidos">
+                {/* <div className="tweets-search-container">
                     <Search
                         enterButton
                         placeholder="Filtre por temas"
                         className="tweets-search" />
-                </div>
+                </div> */}
             </PageHeader>
             <Card title="Métricas" bordered={false}>
                 <TweetsStatistics statistics={statistics} />
             </Card>
 
-            <Card title="Contagem temporal" bordered={false}>
-                <div className="series-container">
-                    <div id="series"></div>
-                </div>
-            </Card>
+            <br />
+            <Row>
+                <Card title="Contagem temporal" bordered={false}>
+                    <div className="static-series-container">
+                        <div id="series"></div>
+                    </div>
+                </Card>
+            </Row>
+            <br />
             <Row gutter={[16, 16]}>
                 <Col span={12}>
-                    <Card title="Localização" bordered={false}>
-                        <div className="map-container">
-                            <div id="map"></div>
-                        </div >
+                    <Card title="Palavras mais utilizadas" bordered={false}>
+                        <div className="word-cloud-container">
+                            <div id="word-cloud"></div>
+                        </div>
                     </Card>
+
                 </Col>
                 <Col span={12}>
                     <Card title="Contagem total" bordered={false}>
-                        <div className="bars-container">
+                        <div className="static-bars-container">
                             <div id="bar"></div>
                         </div>
                     </Card>
                 </Col>
             </Row>
+            <br />
+
             <Row>
-                <div className="word-cloud-container">
-                    <div id="word-cloud"></div>
-                </div>
+                <Card title="Localização" bordered={false}>
+                    <div className="map-container">
+                        <div id="map"></div>
+                    </div >
+                </Card>
             </Row>
         </div>
     );
