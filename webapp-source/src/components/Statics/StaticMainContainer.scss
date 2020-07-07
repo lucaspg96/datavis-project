@@ -3,3 +3,30 @@
   font-weight: bolder;
   font-size: 15px;
 }
+
+.static-series-container {
+  
+  &>div>div>svg>g:nth-child(4)>g>g>g>g>g>g>text {
+    fill: #dadada;
+    // display: none;
+  }
+
+}
+
+.static-bars-container{
+  height: 300px;
+
+  #bar>div>svg>g:nth-child(2)>g:nth-child(2)>g:first-child>g>text {
+      display: none;
+      // fill: #dadada;
+  }
+
+  &>div>div>svg>g:nth-child(4)>g>g>g>g>g text {
+    fill: #dadada;
+    // display: none;
+  }
+}
+
+.ant-checkbox-group-item {
+  color: #dadada;
+}

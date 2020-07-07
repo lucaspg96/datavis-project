@@ -1,11 +1,11 @@
 import React from 'react';
-import { Input, PageHeader, Row, Col, Card } from 'antd';
+import { Input, PageHeader, Row, Col, Card, Checkbox } from 'antd';
 import { useRef } from 'react';
 import crossfilter from 'crossfilter';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { Chart, registerShape, Util } from '@antv/g2';
-import { groupBy, map } from 'lodash';
+import { groupBy, map, isEmpty } from 'lodash';
 import DataSet from '@antv/data-set';
 import * as d3 from "d3";
 import _ from 'lodash';
@@ -17,9 +17,10 @@ import './StaticMainContainer.scss';
 import TweetsStatistics from '../RealTimeContainer/TweetsStatistics';
 import TwitterService from '../../services/TwitterService';
 
-const { Search } = Input;
+const CheckboxGroup = Checkbox.Group
 
 const maxWords = 50;
+const blues = d3.schemeBlues[8].splice(3, 4)
 
 export function StaticMainContainer() {
 
@@ -28,11 +29,16 @@ export function StaticMainContainer() {
     const [selectedKeys, setSelectedKeys] = useState([])
     const keyFilter = t => selectedKeys.length === 0 || selectedKeys.includes(t.key)
 
-    const [barChart, setBarChart] = useState()
-    const [seriesChart, setSeriesChart] = useState()
-    const [wordChart, setWordChart] = useState()
+    const [selectedTypes, setSelectedTypes] = useState([])
+    const typeFilter = t => selectedTypes.length === 0 || selectedTypes.includes(t.type)
 
-    const filteredData = (data || []).filter(keyFilter)
+    const barChart = useRef()
+    const seriesChart = useRef()
+    const wordChart = useRef()
+
+    const filteredData = (data || [])
+        .filter(keyFilter)
+        .filter(typeFilter)
 
     const colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"]
 
@@ -40,13 +46,24 @@ export function StaticMainContainer() {
     const metrics = useRef({ users: new Set() })
     const [coloredKeys, setColors] = useState([]);
 
+    function getTweetType(tweet) {
+        if (tweet.retweet) return "Retweet"
+        else if (tweet.reply) return "Resposta"
+        else return "Original"
+    }
+
     useEffect(() => {
         /** Backend's Request to get historical tweets*/
         TwitterService.find().then(data => {
-            data.forEach(d => d.date = new Date(Number(d.date.$numberLong)));
+            console.log(data)
+            data.forEach(d => {
+                d.date = new Date(parseInt(d.date.$numberLong))
+                d.type = getTweetType(d)
+            });
             setData(addColorToData(data))
         })
     }, [])
+
 
     useEffect(() => {
         if (data) init();
@@ -54,7 +71,13 @@ export function StaticMainContainer() {
 
     useEffect(() => {
         MapController.clearMarkers()
-        draw()
+        if (!isEmpty(data)) {
+            drawBarChart();
+            drawSeriesChart();
+            drawWordChart();
+            addMarkers();
+        }
+        // draw()
     }, [selectedKeys])
 
     //** Initializations */
@@ -64,10 +87,6 @@ export function StaticMainContainer() {
     }
 
     function draw() {
-
-        if (barChart) barChart.destroy()
-        if (seriesChart) seriesChart.destroy()
-        if (wordChart) wordChart.destroy()
 
         if (data) {
             drawBarChart();
@@ -116,16 +135,17 @@ export function StaticMainContainer() {
 
     /** Word Cloud */
     function drawWordChart() {
+
         const dv = configWorldCloud();
         const [min, max] = dv.range('value');
 
-        const blues = d3.schemeBlues[8].splice(3, 4)
-        console.log(blues)
         const colorRange = d3.scaleQuantize()
             .domain([min, max])
             .range(blues)
 
-        console.log(colorRange(min), colorRange(max))
+        if (wordChart.current) {
+            wordChart.current.destroy()
+        }
 
         const chart = new Chart({
             container: 'word-cloud',
@@ -155,7 +175,7 @@ export function StaticMainContainer() {
             .shape('cloud');
         chart.render();
 
-        setWordChart(chart)
+        wordChart.current = chart
     }
 
     function configWorldCloud() {
@@ -191,7 +211,14 @@ export function StaticMainContainer() {
     /** Bar Chart */
     function drawBarChart() {
 
-        const barChart = new Chart({
+        const barData = getBarData();
+
+        if (barChart.current) {
+            barChart.current.changeData(barData)
+            return
+        }
+
+        const chart = new Chart({
             container: 'bar',
             autoFit: true,
             height: 300,
@@ -199,48 +226,59 @@ export function StaticMainContainer() {
         });
 
 
-        const barData = getBarData();
 
-        barChart.data(barData);
-        barChart.coordinate('rect').transpose();
-        barChart.legend(true);
-        barChart.tooltip(true);
-        barChart.interval()
+
+        chart.data(barData);
+        chart.coordinate('rect').transpose();
+        chart.legend("key", {
+            onClick: e => {
+                console.log(e)
+            }
+        });
+        chart.tooltip(true);
+        chart.interval()
             .position('key*value')
             .color('key', key => coloredKeys[key])
 
-        barChart.on("click", e => {
-            const { key } = e.data.data
-
-            if (selectedKeys.includes(key)) setSelectedKeys(selectedKeys.filter(k => k != key))
-            else setSelectedKeys([...selectedKeys, key])
-        })
+        chart.on("click", handleChartClick)
 
 
-        barChart.render();
-        setBarChart(barChart)
+        chart.render();
+        barChart.current = chart
     }
 
     /** Series Chart */
     function drawSeriesChart() {
 
         const chartData = getSeriesData();
-        const seriesChart = new Chart({
+
+        if (seriesChart.current) {
+            seriesChart.current.changeData(chartData)
+            return
+        }
+
+        const chart = new Chart({
             container: 'series',
             autoFit: true,
             height: 200,
             renderer: 'svg'
         })
 
-        seriesChart.data(chartData)
+        chart.data(chartData)
 
-        seriesChart
+        chart
             .line()
             .position('date*value')
+            .shape("smooth")
             .color('keyword', key => coloredKeys[key])
             .label(false)
 
-        seriesChart.axis('date', {
+        chart.axis('date', {
+            label: {
+                formatter: date => {
+                    return new Date(parseInt(date)).toLocaleString()
+                }
+            },
             animateOption: {
                 update: {
                     duration: 1000,
@@ -249,8 +287,10 @@ export function StaticMainContainer() {
             }
         });
 
-        seriesChart.render();
-        setSeriesChart(seriesChart)
+        chart.on("click", handleChartClick)
+
+        chart.render();
+        seriesChart.current = chart
     }
 
 
@@ -281,13 +321,14 @@ export function StaticMainContainer() {
         const group = dimension.group().reduceSum(_ => 1)
 
         const seriesData = group.all()
-            .sort((a, b) => a.key[1] < b.key[1])
-            .map(d => ({ keyword: d.key[0], date: new Date(d.key[1]).toLocaleString(), color: d.key[2], value: d.value }))
+            .sort((a, b) => a.key[1].getTime() < b.key[1].getTime())
+            .map(d => ({ keyword: d.key[0], date: new Date(d.key[1]), color: d.key[2], value: d.value }))
         return seriesData
     }
 
     /** Satistics */
     function configStats() {
+        metrics.current = { users: new Set() }
         filteredData.forEach(function (tweet) {
             metrics.current.users.add(tweet.userName);
             if (tweet.retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
@@ -314,6 +355,26 @@ export function StaticMainContainer() {
      * 
     */
 
+    function handleChartClick(e) {
+        // console.log(e)
+        // const filteredKeys = e.view.filteredData.map(d => d.key)
+        // const clickedObj = e.data
+
+        // // console.log(e)
+        // // const seriesFilteredData = seriesChart.current.filteredData.filter(d => filteredKeys.includes(d.keyword))
+        // // console.log(seriesChart.current)
+        // // seriesChart.current.changeData(seriesFilteredData)
+
+        // if (clickedObj) {
+        //     const key = clickedObj.data.key
+        //     if (selectedKeys.includes(key)) setSelectedKeys(selectedKeys.filter(k => k != key))
+        //     else setSelectedKeys([...selectedKeys, key])
+        // }
+        // else {
+        //     setSelectedKeys(filteredKeys)
+        // }
+    }
+
     function addColorToData(data) {
         const keyColor = {}
         let i = 0
@@ -329,6 +390,7 @@ export function StaticMainContainer() {
         }).filter(t => t.color)
 
         setColors(keyColor);
+        setSelectedKeys(Object.keys(keyColor))
         return newData
     }
 
@@ -364,12 +426,7 @@ export function StaticMainContainer() {
     return (
         <div className="main-container">
             <PageHeader title="Tweets Analyzer" subTitle="Análise histórica dos tweets consumidos">
-                {/* <div className="tweets-search-container">
-                    <Search
-                        enterButton
-                        placeholder="Filtre por temas"
-                        className="tweets-search" />
-                </div> */}
+                <CheckboxGroup options={Object.keys(coloredKeys)} value={selectedKeys} onChange={setSelectedKeys} />
             </PageHeader>
             <Card title="Métricas" bordered={false}>
                 <TweetsStatistics statistics={statistics} />
