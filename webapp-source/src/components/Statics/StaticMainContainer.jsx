@@ -4,8 +4,9 @@ import { useRef } from 'react';
 import crossfilter from 'crossfilter';
 import { useState } from 'react';
 import { useEffect } from 'react';
-import { Chart } from '@antv/g2';
+import { Chart, registerShape, Util } from '@antv/g2';
 import { groupBy, map } from 'lodash';
+import DataSet from '@antv/data-set';
 import * as d3 from "d3";
 import _ from 'lodash';
 
@@ -70,6 +71,7 @@ export function StaticMainContainer() {
             drawSeriesChart();
             configStats();
             addMarkers();
+            drawWordChart();
         }
 
     }
@@ -79,6 +81,92 @@ export function StaticMainContainer() {
      * ###########  Draw Charts  ###########
      * 
     */
+
+   function getTextAttrs(cfg) {
+        return {
+        ...cfg.style,
+        fontSize: cfg.data.size,
+        text: cfg.data.text,
+        textAlign: 'center',
+        fontFamily: cfg.data.font,
+        fill: cfg.color,
+        textBaseline: 'Alphabetic'
+        };
+    }
+
+   registerShape('point', 'cloud', {
+        draw(cfg, container) {
+        const attrs = getTextAttrs(cfg);
+        const textShape = container.addShape('text', {
+            attrs: {
+            ...attrs,
+            x: cfg.x,
+            y: cfg.y
+            }
+        });
+        if (cfg.data.rotate) {
+            Util.rotate(textShape, cfg.data.rotate * Math.PI / 180);
+        }
+        return textShape;
+        }
+    });
+
+    /** Word Cloud */ 
+    function drawWordChart(){
+        const dv = configWorldCloud();
+        const chart = new Chart({
+            container: 'word-cloud',
+            autoFit: true,
+            height: 300,
+            padding: 0
+        });
+        
+        chart.data(dv.rows);
+        chart.scale({
+            x: { nice: false },
+            y: { nice: false }
+        });
+        chart.legend(false);
+        chart.axis(false);
+        chart.tooltip({
+            showTitle: false,
+            showMarkers: false
+        });
+        chart.coordinate().reflect();
+        chart.point()
+            .position('x*y')
+            .color('text')
+            .shape('cloud');
+        chart.render();
+    }
+
+    function configWorldCloud(){
+        const d = getBarData();
+        const dv = new DataSet.View().source(d);
+        const range = dv.range('value');
+        const min = range[0];
+        const max = range[1];
+
+        dv.transform({
+            type: 'tag-cloud',
+            fields: ['key', 'value'],
+            font: 'Verdana',
+            size: [200, 300],
+            padding: 0,
+            timeInterval: 5000, 
+            rotate() {
+                let random = ~~(Math.random() * 4) % 4;
+                if (random === 2) {
+                    random = 0;
+                }
+                return random * 90; // 0, 90, 270
+            },
+            fontSize(d) {
+                return ((d.value - min) / (max - min)) * (32 - 8) + 8;
+            }
+        });  
+        return dv;
+    }
 
     /** Bar Chart */
     function drawBarChart() {
@@ -108,6 +196,7 @@ export function StaticMainContainer() {
             else setSelectedKeys([...selectedKeys, key])
         })
 
+        
         barChart.render();        
         setBarChart(barChart)
     }
@@ -143,6 +232,7 @@ export function StaticMainContainer() {
         seriesChart.render();
         setSeriesChart(seriesChart)
     }
+    
 
     /**
      * 
@@ -277,6 +367,11 @@ export function StaticMainContainer() {
                         </div>
                     </Card>
                 </Col>
+            </Row>
+            <Row>
+                <div className="word-cloud-container">
+                    <div id="word-cloud"></div>
+                </div>
             </Row>
         </div>
     );
