@@ -363,7 +363,7 @@ export function StaticMainContainer() {
 
     return (
         <div className="main-container">
-            <PageHeader title="Tweets Analiser" subTitle="Análise histórica dos tweets consumidos">
+            <PageHeader title="Tweets Analyzer" subTitle="Análise histórica dos tweets consumidos">
                 {/* <div className="tweets-search-container">
                     <Search
                         enterButton

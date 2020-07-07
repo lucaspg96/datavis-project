@@ -32,8 +32,10 @@ object Tweet {
   private def wordCount(text: String): Map[String, Int] = {
     val undesiredChars = Array(".",",","!","'","?",":")
     //removendo caracteres indesejáveis
-    undesiredChars.fold(text)((text, und) => text.replace(und, ""))
+    undesiredChars.fold(text)((text, und) => text.replace(und, "").toLowerCase)
       .split(" ")
+      .flatMap[String](word => word.split("\n"))
+      .flatMap[String](word => word.split("\t"))
       .filterNot(word => word.startsWith("@"))
       .filterNot(word => word.forall(Character.isDigit))
       .filterNot(word => word.length < 5)
