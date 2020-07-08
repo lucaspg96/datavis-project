@@ -137,75 +137,79 @@ export function StaticMainContainer() {
     function drawWordChart() {
 
         const dv = configWorldCloud();
-        const [min, max] = dv.range('value');
+        if(dv && dv.rows.length > 0){
+            const [min, max] = dv.range('value');
 
-        const colorRange = d3.scaleQuantize()
-            .domain([min, max])
-            .range(blues)
+            const colorRange = d3.scaleQuantize()
+                .domain([min, max])
+                .range(blues)
 
-        if (wordChart.current) {
-            wordChart.current.destroy()
+            if (wordChart.current) {
+                wordChart.current.destroy()
+            }
+
+            const chart = new Chart({
+                container: 'word-cloud',
+                autoFit: true,
+                height: 300,
+                padding: 0
+            });
+
+            chart.data(dv.rows);
+            chart.scale({
+                x: { nice: false },
+                y: { nice: false }
+            });
+            chart.legend(false);
+            chart.axis(false);
+            chart.tooltip({
+                showTitle: false,
+                showMarkers: false
+            });
+            chart.coordinate().reflect();
+            chart.point()
+                .position('x*y')
+                .color('value', v => {
+
+                    return colorRange(v)
+                })
+                .shape('cloud');
+            chart.render();
+
+            wordChart.current = chart
         }
-
-        const chart = new Chart({
-            container: 'word-cloud',
-            autoFit: true,
-            height: 300,
-            padding: 0
-        });
-
-        chart.data(dv.rows);
-        chart.scale({
-            x: { nice: false },
-            y: { nice: false }
-        });
-        chart.legend(false);
-        chart.axis(false);
-        chart.tooltip({
-            showTitle: false,
-            showMarkers: false
-        });
-        chart.coordinate().reflect();
-        chart.point()
-            .position('x*y')
-            .color('value', v => {
-
-                return colorRange(v)
-            })
-            .shape('cloud');
-        chart.render();
-
-        wordChart.current = chart
     }
 
     function configWorldCloud() {
         const wc = getWordCount()
         const dv = new DataSet.View().source(wc);
 
-        const [min, max] = dv.range('value');
-        const mean = 10
-        dv.transform({
-            spiral: 'rectangular',
-            type: 'tag-cloud',
-            fields: ['key', 'value'],
-            font: 'serif',
-            size: [600, 300],
-            padding: 0,
-            timeInterval: Infinity,
-            rotate() {
-                let random = ~~(Math.random() * 4) % 4;
-                if (random === 2) {
-                    random = 0;
+        if(dv.rows.length > 0){
+            const [min, max] = dv.range('value');
+            const mean = 10
+            dv.transform({
+                spiral: 'rectangular',
+                type: 'tag-cloud',
+                fields: ['key', 'value'],
+                font: 'serif',
+                size: [600, 300],
+                padding: 0,
+                timeInterval: Infinity,
+                rotate() {
+                    let random = ~~(Math.random() * 4) % 4;
+                    if (random === 2) {
+                        random = 0;
+                    }
+                    return random * 90; // 0, 90, 270
+                },
+                fontSize(d) {
+                    const [minFont, maxFont] = [24, 80]
+                    const size = ((d.value - min) / (max - min)) * (maxFont - minFont) + minFont
+                    return size;
                 }
-                return random * 90; // 0, 90, 270
-            },
-            fontSize(d) {
-                const [minFont, maxFont] = [24, 80]
-                const size = ((d.value - min) / (max - min)) * (maxFont - minFont) + minFont
-                return size;
-            }
-        });
-        return dv;
+            });
+            return dv;
+        }
     }
 
     /** Bar Chart */
