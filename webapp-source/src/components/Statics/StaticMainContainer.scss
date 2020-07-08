@@ -5,11 +5,15 @@
 }
 
 .static-series-container {
-  
-  &>div>div>svg>g:nth-child(4)>g>g>g>g>g>g>text {
-    fill: #dadada;
-    // display: none;
+
+  g.stack._0>path {
+    stroke-width: 3px;
   }
+  
+//   &>div>div>svg>g:nth-child(4)>g>g>g>g>g>g>text {
+//     fill: #dadada;
+//     // display: none;
+//   }
 
 }
 
@@ -25,8 +29,25 @@
     fill: #dadada;
     // display: none;
   }
+
+  rect.bar.deselected {
+    opacity: 0.2;
+  }
 }
 
 .ant-checkbox-group-item {
   color: #dadada;
+}
+
+.axis.x, .axis.y{
+  color: #dadada;
+  font-size: 15px;
+}
+
+.y-axis-label, .x-axis-label {
+  fill: #dadada
+}
+
+path.line {
+  fill: none;
 }

@@ -8,6 +8,7 @@ import { Chart, registerShape, Util } from '@antv/g2';
 import { groupBy, map, isEmpty } from 'lodash';
 import DataSet from '@antv/data-set';
 import * as d3 from "d3";
+import * as dc from "dc";
 import _ from 'lodash';
 
 import * as MapController from '../../map/MapController';
@@ -31,10 +32,10 @@ export function StaticMainContainer() {
 
     const [selectedTypes, setSelectedTypes] = useState([])
     const typeFilter = t => selectedTypes.length === 0 || selectedTypes.includes(t.type)
+    console.log(selectedTypes)
 
-    const barChart = useRef()
-    const seriesChart = useRef()
     const wordChart = useRef()
+    const [barChart, setBarChart] = useState()
 
     const filteredData = (data || [])
         .filter(keyFilter)
@@ -47,9 +48,15 @@ export function StaticMainContainer() {
     const [coloredKeys, setColors] = useState([]);
 
     function getTweetType(tweet) {
-        if (tweet.retweet) return "Retweet"
-        else if (tweet.reply) return "Resposta"
-        else return "Original"
+        if (tweet.retweet) return "retweet"
+        else if (tweet.reply) return "reply"
+        else return "original"
+    }
+
+    function changeTypeFilter(type) {
+        console.log(selectedTypes, type)
+        if (selectedTypes.includes(type)) setSelectedTypes(selectedTypes.filter(t => t !== type))
+        else setSelectedTypes([...selectedTypes, type])
     }
 
     useEffect(() => {
@@ -71,11 +78,24 @@ export function StaticMainContainer() {
 
     useEffect(() => {
         MapController.clearMarkers()
+        draw()
+
+    }, [selectedTypes])
+
+    useEffect(() => {
+        MapController.clearMarkers()
         if (!isEmpty(data)) {
-            drawBarChart();
-            drawSeriesChart();
+            if (barChart)
+                barChart.on('filtered.monitor', (_, type) => {
+                    if (selectedKeys.includes(type))
+                        setSelectedKeys(selectedKeys.filter(k => k !== type))
+                    else setSelectedKeys([...selectedKeys, type])
+                });
+            // drawBarChart();
+            // drawSeriesChart();
             drawWordChart();
             addMarkers();
+            configStats()
         }
         // draw()
     }, [selectedKeys])
@@ -83,17 +103,44 @@ export function StaticMainContainer() {
     //** Initializations */
     function init() {
         MapController.createMap("map");
+
         draw();
     }
 
-    function draw() {
+    // function updateAreaFilter(e, idDimension) {
+    //     const visible = new Set()
 
+    //     data.forEach(d => {
+    //         if(!d.position) visible.add
+    //     })
+
+    //     MapController.getMarkersLayer().eachLayer(marker => {
+    //         if (e.target.getBounds().contains(marker.getLatLng()))
+    //             visible.add(marker.id)
+    //     })
+
+    //     console.log(visible)
+
+    //     idDimension.filterFunction(id => visible.has(id))
+    // }
+
+    function draw() {
         if (data) {
-            drawBarChart();
-            drawSeriesChart();
+            const factsData = (data || []).filter(typeFilter)
+            const facts = crossfilter(factsData)
+            // const idDimension = facts.dimension(d => d.id)
+
+
+            // MapController.getMap()
+            //     .on('moveend', e => updateAreaFilter(e, idDimension))
+
+            drawBarChart(facts);
+            drawSeriesChart(facts);
             configStats();
             addMarkers();
             drawWordChart();
+
+            dc.renderAll()
         }
 
     }
@@ -104,39 +151,11 @@ export function StaticMainContainer() {
      * 
     */
 
-    function getTextAttrs(cfg) {
-        return {
-            ...cfg.style,
-            fontSize: cfg.data.size,
-            text: cfg.data.text,
-            textAlign: 'center',
-            fontFamily: cfg.data.font,
-            fill: cfg.color,
-            textBaseline: 'Alphabetic'
-        };
-    }
-
-    registerShape('point', 'cloud', {
-        draw(cfg, container) {
-            const attrs = getTextAttrs(cfg);
-            const textShape = container.addShape('text', {
-                attrs: {
-                    ...attrs,
-                    x: cfg.x,
-                    y: cfg.y
-                }
-            });
-            if (cfg.data.rotate) {
-                Util.rotate(textShape, cfg.data.rotate * Math.PI / 180);
-            }
-            return textShape;
-        }
-    });
-
     /** Word Cloud */
     function drawWordChart() {
 
         const dv = configWorldCloud();
+        if (!dv) return
         const [min, max] = dv.range('value');
 
         const colorRange = d3.scaleQuantize()
@@ -180,6 +199,8 @@ export function StaticMainContainer() {
 
     function configWorldCloud() {
         const wc = getWordCount()
+        if (isEmpty(wc))
+            return
         const dv = new DataSet.View().source(wc);
 
         const [min, max] = dv.range('value');
@@ -209,88 +230,67 @@ export function StaticMainContainer() {
     }
 
     /** Bar Chart */
-    function drawBarChart() {
+    function drawBarChart(facts) {
+        const keyDimension = facts.dimension(d => d.key)
+        const keyCountGroup = keyDimension.group()
 
-        const barData = getBarData();
+        const keyScale = d3.scaleOrdinal().domain(Object.keys(coloredKeys))
 
-        if (barChart.current) {
-            barChart.current.changeData(barData)
-            return
-        }
+        const chart = dc.barChart(d3.select("#bar"))
+        chart
+            .width(600)
+            .height(300)
+            .dimension(keyDimension)
+            .xUnits(dc.units.ordinal)
+            .margins({ top: 10, right: 20, bottom: 50, left: 50 })
+            .x(keyScale)
+            .colors(k => coloredKeys[k])
+            .colorAccessor(d => d.key)
+            // .centerBar(true)
+            .gap(50)
+            .renderHorizontalGridLines(true)
+            .group(keyCountGroup, 'Contagem dos tipos de crimes')
 
-        const chart = new Chart({
-            container: 'bar',
-            autoFit: true,
-            height: 300,
-            renderer: 'svg'
+        chart.on('filtered.monitor', (_, type) => {
+            if (selectedKeys.includes(type))
+                setSelectedKeys(selectedKeys.filter(k => k !== type))
+            else setSelectedKeys([...selectedKeys, type])
         });
 
-
-
-
-        chart.data(barData);
-        chart.coordinate('rect').transpose();
-        chart.legend("key", {
-            onClick: e => {
-                console.log(e)
-            }
-        });
-        chart.tooltip(true);
-        chart.interval()
-            .position('key*value')
-            .color('key', key => coloredKeys[key])
-
-        chart.on("click", handleChartClick)
-
-
-        chart.render();
-        barChart.current = chart
+        setBarChart(chart)
     }
 
     /** Series Chart */
-    function drawSeriesChart() {
+    function drawSeriesChart(facts) {
+        const timeDimension = facts.dimension(d => [d.key, d.date])
+        const timeCountGroup = timeDimension.group()
+        const timeScale = d3
+            .scaleTime()
+            .domain([d3.min(data || [], d => d.date), d3.max(data || [], d => d.date)])
 
-        const chartData = getSeriesData();
+        const dateSeriesChart = new dc.SeriesChart(d3.select("#series"));
+        dateSeriesChart
+            .width(1200)
+            .height(300)
+            .chart(function (c) { return new dc.LineChart(c).curve(d3.curveCardinal); })
+            .x(timeScale)
+            .margins({ top: 10, right: 10, bottom: 50, left: 30 })
+            .brushOn(false)
+            // .yAxisLabel("Número de Tweet")
+            // .xAxisLabel("Time")
+            .clipPadding(10)
+            .elasticY(true)
+            .dimension(timeDimension)
+            .group(timeCountGroup)
+            // .mouseZoomable(true)
+            .seriesAccessor(function (d) { return d.key[0]; })
+            .keyAccessor(function (d) { return d.key[1]; })
+            .valueAccessor(function (d) { return +d.value; })
+            // .legend(dc.legend().x(350).y(350).itemHeight(13).gap(5).horizontal(1).legendWidth(140).itemWidth(70))
+            .colors(k => coloredKeys[k])
+            .colorAccessor(d => d.key[0]);
 
-        if (seriesChart.current) {
-            seriesChart.current.changeData(chartData)
-            return
-        }
-
-        const chart = new Chart({
-            container: 'series',
-            autoFit: true,
-            height: 200,
-            renderer: 'svg'
-        })
-
-        chart.data(chartData)
-
-        chart
-            .line()
-            .position('date*value')
-            .shape("smooth")
-            .color('keyword', key => coloredKeys[key])
-            .label(false)
-
-        chart.axis('date', {
-            label: {
-                formatter: date => {
-                    return new Date(parseInt(date)).toLocaleString()
-                }
-            },
-            animateOption: {
-                update: {
-                    duration: 1000,
-                    easing: 'easeLinear'
-                }
-            }
-        });
-
-        chart.on("click", handleChartClick)
-
-        chart.render();
-        seriesChart.current = chart
+        // dateSeriesChart.xAxis().ticks(4)
     }
 
 
@@ -300,44 +300,24 @@ export function StaticMainContainer() {
      * 
     */
 
-
-    /** Process data to Bar Chart */
-    function getBarData() {
-        const groupedData = _(filteredData)
-            .groupBy(tweet => tweet.key)
-            .map(tweet => _.merge({
-                key: tweet[0].key,
-                value: tweet.length
-            }))
-            .value();
-
-        return _.sortBy(groupedData, tweets => tweets.value);
-    }
-
-    /** Process data to Series Chart */
-    function getSeriesData() {
-        const facts = crossfilter(filteredData)
-        const dimension = facts.dimension(d => [d.key, d.date, d.color])
-        const group = dimension.group().reduceSum(_ => 1)
-
-        const seriesData = group.all()
-            .sort((a, b) => a.key[1].getTime() < b.key[1].getTime())
-            .map(d => ({ keyword: d.key[0], date: new Date(d.key[1]), color: d.key[2], value: d.value }))
-        return seriesData
-    }
-
     /** Satistics */
     function configStats() {
         metrics.current = { users: new Set() }
+
+        data.forEach(tweet => {
+            if (tweet.retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
+            else if (tweet.reply) metrics.current.replies = (metrics.current.replies || 0) + 1
+            else metrics.current.original = (metrics.current.original || 0) + 1
+        })
+
         filteredData.forEach(function (tweet) {
             metrics.current.users.add(tweet.userName);
-            if (tweet.retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
-            if (tweet.reply) metrics.current.replies = (metrics.current.replies || 0) + 1
             if (tweet.position) metrics.current.geolocated = (metrics.current.geolocated || 0) + 1
             metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + tweet.mediasAndLink
-            metrics.current.total = (metrics.current.total || 0) + 1
             metrics.current.mentions = (metrics.current.mentions || 0) + tweet.mentions
+            metrics.current.total = (metrics.current.total || 0) + 1
         });
+
         setStatistics({
             users: metrics.current.users.size,
             retweets: (metrics.current.retweets || 0),
@@ -345,7 +325,8 @@ export function StaticMainContainer() {
             total: metrics.current.total,
             mentions: metrics.current.mentions,
             geolocated: metrics.current.geolocated,
-            replies: metrics.current.replies
+            replies: metrics.current.replies,
+            originals: metrics.current.original
         })
     }
 
@@ -355,25 +336,39 @@ export function StaticMainContainer() {
      * 
     */
 
-    function handleChartClick(e) {
-        // console.log(e)
-        // const filteredKeys = e.view.filteredData.map(d => d.key)
-        // const clickedObj = e.data
-
-        // // console.log(e)
-        // // const seriesFilteredData = seriesChart.current.filteredData.filter(d => filteredKeys.includes(d.keyword))
-        // // console.log(seriesChart.current)
-        // // seriesChart.current.changeData(seriesFilteredData)
-
-        // if (clickedObj) {
-        //     const key = clickedObj.data.key
-        //     if (selectedKeys.includes(key)) setSelectedKeys(selectedKeys.filter(k => k != key))
-        //     else setSelectedKeys([...selectedKeys, key])
-        // }
-        // else {
-        //     setSelectedKeys(filteredKeys)
-        // }
+    function getTextAttrs(cfg) {
+        return {
+            ...cfg.defaultStyle,
+            ...cfg.style,
+            fontSize: cfg.data.size,
+            text: cfg.data.text,
+            textAlign: 'center',
+            fontFamily: cfg.data.font,
+            fill: cfg.color || cfg.defaultStyle.stroke,
+            textBaseline: 'Alphabetic'
+        };
     }
+
+    // 给point注册一个词云的shape
+    registerShape('point', 'cloud', {
+        draw(cfg, container) {
+            const attrs = getTextAttrs(cfg);
+            const textShape = container.addShape('text', {
+                attrs: {
+                    ...attrs,
+                    x: cfg.x,
+                    y: cfg.y
+                }
+            });
+            if (cfg.data.rotate) {
+                Util.rotate(textShape, cfg.data.rotate * Math.PI / 180);
+            }
+
+            return textShape;
+        }
+    });
+
+
 
     function addColorToData(data) {
         const keyColor = {}
@@ -390,7 +385,6 @@ export function StaticMainContainer() {
         }).filter(t => t.color)
 
         setColors(keyColor);
-        setSelectedKeys(Object.keys(keyColor))
         return newData
     }
 
@@ -400,7 +394,7 @@ export function StaticMainContainer() {
         filteredData
             .forEach(function (tweet) {
                 tweet.date = new Date(tweet.date);
-                MapController.createMarker(tweet, _, true);
+                MapController.addMarker(tweet, _, true);
             });
     }
 
@@ -426,10 +420,10 @@ export function StaticMainContainer() {
     return (
         <div className="main-container">
             <PageHeader title="Tweets Analyzer" subTitle="Análise histórica dos tweets consumidos">
-                <CheckboxGroup options={Object.keys(coloredKeys)} value={selectedKeys} onChange={setSelectedKeys} />
+                {/* <CheckboxGroup options={Object.keys(coloredKeys)} value={selectedKeys} onChange={setSelectedKeys} /> */}
             </PageHeader>
             <Card title="Métricas" bordered={false}>
-                <TweetsStatistics statistics={statistics} />
+                <TweetsStatistics statistics={statistics} selectable={true} onClick={changeTypeFilter} selected={selectedTypes} />
             </Card>
 
             <br />

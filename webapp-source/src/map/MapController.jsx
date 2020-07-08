@@ -22,6 +22,14 @@ export function createMap(containerId) {
 
 }
 
+export function getMap() {
+    return map;
+}
+
+export function getMarkersLayer() {
+    return markersLayer;
+}
+
 function createPopup(tweet) {
 
     const content = <Comment
@@ -43,22 +51,37 @@ export function clearMarkers() {
     dataWithoutPosition = 0;
 }
 
-export function createMarker(tweet, duration = 20000, staticMap = false) {
+export function createMarker(tweet) {
+
+    if (!markersLayer) {
+        markersLayer = L.layerGroup().addTo(map)
+    }
+
+    const marker = L.marker(tweet.position, {
+        icon: L.divIcon({
+            className: 'css-icon',
+            html: `<div class="tweet-map-marker"
+            style="background-color:${tweet.color}"></div>`
+        })
+    })
+        .bindPopup(createPopup(tweet))
+
+    marker.id = tweet.id
+
+    return marker
+
+}
+
+export function addMarker(tweet, duration = 20000, staticMap = false) {
 
     if (!markersLayer) {
         markersLayer = L.layerGroup().addTo(map)
     }
 
     if (tweet.position) {
-        const marker = L.marker(tweet.position, {
-            icon: L.divIcon({
-                className: 'css-icon',
-                html: `<div class="tweet-map-marker"
-                style="background-color:${tweet.color}"></div>`
-            })
-        })
+        const marker = createMarker(tweet)
             .addTo(markersLayer)
-            .bindPopup(createPopup(tweet))
+
 
         if (!staticMap) {
             setTimeout(() => {

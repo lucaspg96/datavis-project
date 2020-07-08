@@ -41,6 +41,7 @@ export default function RealTimeContainer() {
     ];
 
     const [takenColors, setTakenColors] = useState([]);
+    const keyColor = useRef([]);
 
     const data = useRef([])
     const count = useRef({})
@@ -65,7 +66,8 @@ export default function RealTimeContainer() {
             total: metrics.current.total,
             mentions: metrics.current.mentions,
             geolocated: metrics.current.geolocated,
-            replies: metrics.current.replies
+            replies: metrics.current.replies,
+            originals: metrics.current.original
         })
 
         setTargetTime(new Date().getTime() + graphRefreshTimeout)
@@ -80,13 +82,14 @@ export default function RealTimeContainer() {
         });
 
         SocketController.addListenner("map", tweet => {
-            MapController.createMarker(tweet);
+            MapController.addMarker(tweet);
         });
 
         SocketController.addListenner("metrics", ({ userName, retweet, reply, mediasAndLink, mentions, position }) => {
             metrics.current.users.add(userName)
             if (retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
-            if (reply) metrics.current.replies = (metrics.current.replies || 0) + 1
+            else if (reply) metrics.current.replies = (metrics.current.replies || 0) + 1
+            else metrics.current.original = (metrics.current.original || 0) + 1
             if (position) metrics.current.geolocated = (metrics.current.geolocated || 0) + 1
             metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + mediasAndLink
             metrics.current.total = (metrics.current.total || 0) + 1
@@ -105,6 +108,7 @@ export default function RealTimeContainer() {
         data.current.splice(0, data.current.length)
         Object.keys(count.current).forEach(k => count.current[k].key = 0)
         MapController.clearMarkers();
+        keyColor.current = takenColors
     }, [takenColors])
 
     function getSeriesData() {
@@ -158,7 +162,7 @@ export default function RealTimeContainer() {
             .line()
             .position('date*value')
             .color('keyword', k => {
-                return takenColors.filter(c => c[0] === k)[0][1]
+                return keyColor.current.filter(c => c[0] === k)[0][1]
             })
             .label(false)
 
@@ -248,7 +252,9 @@ export default function RealTimeContainer() {
         chart
             .interval()
             .position('key*value')
-            .color('color', c => c)
+            .color('key', k => {
+                return keyColor.current.filter(c => c[0] === k)[0][1]
+            })
             .animate({
                 appear: {
                     duration: 1000,
