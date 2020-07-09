@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/datavis-project/static/css/main.6bb72993.chunk.css",
-    "main.js": "/datavis-project/static/js/main.ed40165a.chunk.js",
-    "main.js.map": "/datavis-project/static/js/main.ed40165a.chunk.js.map",
+    "main.js": "/datavis-project/static/js/main.fea97671.chunk.js",
+    "main.js.map": "/datavis-project/static/js/main.fea97671.chunk.js.map",
     "runtime-main.js": "/datavis-project/static/js/runtime-main.7769b6a8.js",
     "runtime-main.js.map": "/datavis-project/static/js/runtime-main.7769b6a8.js.map",
     "static/css/2.1bfbd074.chunk.css": "/datavis-project/static/css/2.1bfbd074.chunk.css",
     "static/js/2.fa129633.chunk.js": "/datavis-project/static/js/2.fa129633.chunk.js",
     "static/js/2.fa129633.chunk.js.map": "/datavis-project/static/js/2.fa129633.chunk.js.map",
     "index.html": "/datavis-project/index.html",
-    "precache-manifest.7db034e1bba6d778832a36aa2897703a.js": "/datavis-project/precache-manifest.7db034e1bba6d778832a36aa2897703a.js",
+    "precache-manifest.4319c5338a326085798d99b344b6122b.js": "/datavis-project/precache-manifest.4319c5338a326085798d99b344b6122b.js",
     "service-worker.js": "/datavis-project/service-worker.js",
     "static/css/2.1bfbd074.chunk.css.map": "/datavis-project/static/css/2.1bfbd074.chunk.css.map",
     "static/css/main.6bb72993.chunk.css.map": "/datavis-project/static/css/main.6bb72993.chunk.css.map",
@@ -20,6 +20,6 @@
     "static/css/2.1bfbd074.chunk.css",
     "static/js/2.fa129633.chunk.js",
     "static/css/main.6bb72993.chunk.css",
-    "static/js/main.ed40165a.chunk.js"
+    "static/js/main.fea97671.chunk.js"
   ]
 }

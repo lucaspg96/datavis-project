@@ -11,7 +11,7 @@ export default {
     },
 
     getStaticData() {
-        return axios.get("/data.json").then(res => res.data)
+        return axios.get(window.location.href + "data.json").then(res => res.data)
     }
 
 }
