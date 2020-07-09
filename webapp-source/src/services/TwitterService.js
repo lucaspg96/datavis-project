@@ -8,6 +8,10 @@ export default {
 
     find() {
         return service.get("/historical-tweets").then(res => res.data)
+    },
+
+    getStaticData() {
+        return axios.get(window.location.href + "data.json").then(res => res.data)
     }
 
 }

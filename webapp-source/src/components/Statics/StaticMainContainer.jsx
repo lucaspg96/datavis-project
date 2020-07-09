@@ -10,7 +10,7 @@ import DataSet from '@antv/data-set';
 import * as d3 from "d3";
 import * as dc from "dc";
 import _ from 'lodash';
-import { quantileSeq } from "mathjs"
+import { quantileSeq, arg } from "mathjs"
 
 import * as MapController from '../../map/MapController';
 import './StaticMainContainer.scss';
@@ -41,6 +41,9 @@ export function StaticMainContainer() {
     const [selectedTypes, setSelectedTypes] = useState([])
     const typeFilter = t => selectedTypes.length === 0 || selectedTypes.includes(t.type)
 
+    const [dateInterval, setDateInterval] = useState()
+    const dateFilter = t => !dateInterval || (t.date.getTime() >= dateInterval[0] && t.date.getTime() <= dateInterval[1])
+
     const wordChart = useRef()
 
     const [barChart, setBarChart] = useState()
@@ -49,6 +52,7 @@ export function StaticMainContainer() {
     const filteredData = (data || [])
         .filter(keyFilter)
         .filter(typeFilter)
+        .filter(dateFilter)
 
     const colors = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"]
 
@@ -72,16 +76,20 @@ export function StaticMainContainer() {
         else return "Original"
     }
 
+    function processData(data) {
+        data.forEach(d => {
+            d.date = new Date(parseInt(d.date.$numberLong))
+            d.type = getTweetType(d)
+        });
+        setData(addColorToData(data))
+    }
+
     useEffect(() => {
         /** Backend's Request to get historical tweets*/
-        TwitterService.find().then(data => {
-
-            data.forEach(d => {
-                d.date = new Date(parseInt(d.date.$numberLong))
-                d.type = getTweetType(d)
-            });
-            setData(addColorToData(data))
-        })
+        TwitterService.find().then(processData)
+            .catch(_ => {
+                TwitterService.getStaticData().then(processData)
+            })
     }, [])
 
 
@@ -94,6 +102,36 @@ export function StaticMainContainer() {
             drawSeriesChart(facts).render()
         }
     }, [dateFormater, facts])
+
+    useEffect(() => {
+        if (facts) {
+            if (dateInterval) {
+                const newFacts = crossfilter(data.filter(dateFilter))
+                drawBarChart(newFacts).render()
+                drawSunburst(newFacts).render()
+            }
+            else {
+                const factsData = (data || [])
+                const facts = crossfilter(factsData)
+                // const idDimension = facts.dimension(d => d.id)
+
+
+                // MapController.getMap()
+                //     .on('moveend', e => updateAreaFilter(e, idDimension))
+
+                drawBarChart(facts);
+                drawSeriesChart(facts);
+                // configStats();
+                // addMarkers();
+                // drawWordChart();
+                drawSunburst(facts);
+
+                dc.renderAll()
+
+            }
+        }
+
+    }, [dateInterval, facts])
 
     useEffect(() => {
         MapController.clearMarkers()
@@ -116,7 +154,7 @@ export function StaticMainContainer() {
             addMarkers();
         }
         // draw()
-    }, [selectedKeys, selectedTypes])
+    }, [selectedKeys, selectedTypes, dateInterval])
 
     //** Initializations */
     function init() {
@@ -277,22 +315,37 @@ export function StaticMainContainer() {
         });
 
         setBarChart(chart)
+        return chart;
 
     }
 
     /** Series Chart */
     function drawSeriesChart(facts) {
+
         const timeDimension = facts.dimension(d => [d.key, dateFormater(d.date)])
         const timeCountGroup = timeDimension.group()
+
+        // const rangeTimeDimension = facts.dimension(d => [d.key, dateFormater(d.date)])
+        // const rangeTimeCountGroup = rangeTimeDimension.group()
+
+        const [minDate, maxDate] = d3.extent(data || [], d => dateFormater(d.date))
+
         const timeScale = d3
             .scaleTime()
-            .domain([d3.min(data || [], d => dateFormater(d.date)), d3.max(data || [], d => dateFormater(d.date))])
+            .domain([minDate, maxDate])
+
+
+        // const rangeTimeScale = d3
+        //     .scaleTime()
+        //     .domain([d3.min(data || [], d => dateFormater(d.date)), d3.max(data || [], d => dateFormater(d.date))])
 
         const dateSeriesChart = new dc.SeriesChart(d3.select("#series"));
+        // const rangeChart = new dc.SeriesChart(d3.select("#series-range"));
+
         dateSeriesChart
             .width(1200)
             .height(300)
-            .chart(function (c) { return new dc.LineChart(c).curve(d3.curveCardinal).renderDataPoints(true); })
+            .chart(function (c) { return new dc.LineChart(c).curve(d3.curveCardinal); })
             .x(timeScale)
             .margins({ top: 10, right: 10, bottom: 50, left: 80 })
             .brushOn(false)
@@ -302,8 +355,9 @@ export function StaticMainContainer() {
             .elasticY(true)
             .dimension(timeDimension)
             .group(timeCountGroup)
-            // .mouseZoomable(true)
-            // .brushOn(true)
+            .mouseZoomable(true)
+
+            // .rangeChart(rangeChart)
             .seriesAccessor(function (d) { return d.key[0]; })
             .keyAccessor(function (d) { return d.key[1]; })
             .valueAccessor(function (d) { return +d.value; })
@@ -311,21 +365,43 @@ export function StaticMainContainer() {
             .colors(k => coloredKeys[k])
             .colorAccessor(d => d.key[0]);
 
+        dateSeriesChart.on("filtered.monitor", (_, dateInterval) => {
+            if (isEmpty(dateInterval)) setDateInterval()
+            else {
+                if (dateInterval[0].getTime() === minDate.getTime() && dateInterval[1].getTime() === maxDate.getTime())
+                    setDateInterval()
+                else setDateInterval(dateInterval)
+            }
+        })
+
+
+
+        // rangeChart
+        //     .width(1200)
+        //     .height(300)
+        //     .chart(function (c) { return new dc.LineChart(c).curve(d3.curveCardinal) })
+        //     .x(rangeTimeScale)
+        //     .margins({ top: 10, right: 10, bottom: 50, left: 80 })
+        //     .brushOn(true)
+        //     .mouseZoomable(true)
+        //     .yAxisLabel("Quantidade de Tweets")
+        //     .xAxisLabel("Horário")
+        //     .clipPadding(10)
+        //     .elasticY(true)
+        //     .dimension(timeDimension)
+        //     .group(timeCountGroup)
+        //     .seriesAccessor(function (d) { return d.key[0]; })
+        //     .keyAccessor(function (d) { return d.key[1]; })
+        //     .valueAccessor(function (d) { return +d.value; })
+        //     // .legend(dc.legend().x(80).y(284).itemHeight(13).autoItemWidth(true).horizontal(1))
+        //     .colors(k => coloredKeys[k])
+        //     .colorAccessor(d => d.key[0]);
+
+        // rangeChart.xAxis().ticks(4)
+
+
         return dateSeriesChart
 
-        // dateSeriesChart.on('filtered.monitor', e => {
-        //     console.log(dateFilter, e._filters[0])
-        //     if (e._filters[0]) {
-        //         const [from, to] = e._filters[0].map(t => t.getTime())
-
-        //         setDateFilter(() => t => t.date.getTime() >= from && t.date.getTime() <= to)
-        //     } else {
-        //         setDateFilter(() => t => true)
-        //     }
-
-        // });
-
-        // dateSeriesChart.xAxis().ticks(4)
     }
 
     function drawSunburst(facts) {
@@ -353,6 +429,7 @@ export function StaticMainContainer() {
         });
 
         setPieChart(chart)
+        return chart
     }
 
 
@@ -377,14 +454,6 @@ export function StaticMainContainer() {
             metrics.current.mentions = (metrics.current.mentions || 0) + tweet.mentions
             metrics.current.total = (metrics.current.total || 0) + 1
         })
-
-        // filteredData.forEach(function (tweet) {
-        //     metrics.current.users.add(tweet.userName);
-        //     if (tweet.position) metrics.current.geolocated = (metrics.current.geolocated || 0) + 1
-        //     metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + tweet.mediasAndLink
-        //     metrics.current.mentions = (metrics.current.mentions || 0) + tweet.mentions
-        //     metrics.current.total = (metrics.current.total || 0) + 1
-        // });
 
         setStatistics({
             users: metrics.current.users.size,
@@ -417,7 +486,6 @@ export function StaticMainContainer() {
         };
     }
 
-    // 给point注册一个词云的shape
     registerShape('point', 'cloud', {
         draw(cfg, container) {
             const attrs = getTextAttrs(cfg);
@@ -503,6 +571,8 @@ export function StaticMainContainer() {
                 <Card title="Contagem temporal" bordered={false} extra={dateFormatSelect}>
                     <div className="static-series-container">
                         <div id="series"></div>
+
+                        <div id="series-range"></div>
                     </div>
                 </Card>
             </Row>
