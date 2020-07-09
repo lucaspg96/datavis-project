@@ -72,16 +72,20 @@ export function StaticMainContainer() {
         else return "Original"
     }
 
+    function processData(data) {
+        data.forEach(d => {
+            d.date = new Date(parseInt(d.date.$numberLong))
+            d.type = getTweetType(d)
+        });
+        setData(addColorToData(data))
+    }
+
     useEffect(() => {
         /** Backend's Request to get historical tweets*/
-        TwitterService.find().then(data => {
-
-            data.forEach(d => {
-                d.date = new Date(parseInt(d.date.$numberLong))
-                d.type = getTweetType(d)
-            });
-            setData(addColorToData(data))
-        })
+        TwitterService.find().then(processData)
+            .catch(_ => {
+                TwitterService.getStaticData().then(processData)
+            })
     }, [])
 
 
