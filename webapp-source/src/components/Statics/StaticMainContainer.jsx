@@ -1,15 +1,16 @@
 import React from 'react';
-import { Input, PageHeader, Row, Col, Card, Checkbox } from 'antd';
+import { Input, PageHeader, Row, Col, Card, Checkbox, Select } from 'antd';
 import { useRef } from 'react';
 import crossfilter from 'crossfilter';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { Chart, registerShape, Util } from '@antv/g2';
-import { groupBy, map, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import DataSet from '@antv/data-set';
 import * as d3 from "d3";
 import * as dc from "dc";
 import _ from 'lodash';
+import { quantileSeq } from "mathjs"
 
 import * as MapController from '../../map/MapController';
 import './StaticMainContainer.scss';
@@ -18,10 +19,17 @@ import './StaticMainContainer.scss';
 import TweetsStatistics from '../RealTimeContainer/TweetsStatistics';
 import TwitterService from '../../services/TwitterService';
 
-const CheckboxGroup = Checkbox.Group
+const { Option } = Select
 
 const maxWords = 50;
-const blues = d3.schemeBlues[8].splice(3, 4)
+const wordsColors = ["#646464", "#818181", "#a2a2a2", "#ffffff"]
+
+const formatFunctions = {
+    minutes: d3.timeMinute,
+    seconds: d3.timeSecond,
+    hour: d3.timeHour,
+    day: d3.timeDay
+}
 
 export function StaticMainContainer() {
 
@@ -32,10 +40,11 @@ export function StaticMainContainer() {
 
     const [selectedTypes, setSelectedTypes] = useState([])
     const typeFilter = t => selectedTypes.length === 0 || selectedTypes.includes(t.type)
-    console.log(selectedTypes)
 
     const wordChart = useRef()
+
     const [barChart, setBarChart] = useState()
+    const [pieChart, setPieChart] = useState()
 
     const filteredData = (data || [])
         .filter(keyFilter)
@@ -47,22 +56,26 @@ export function StaticMainContainer() {
     const metrics = useRef({ users: new Set() })
     const [coloredKeys, setColors] = useState([]);
 
-    function getTweetType(tweet) {
-        if (tweet.retweet) return "retweet"
-        else if (tweet.reply) return "reply"
-        else return "original"
-    }
+    const [dateFormater, setDateFormater] = useState(() => formatFunctions.seconds)
+    const dateFormatSelect = <Select defaultValue={"seconds"} onChange={f => setDateFormater(() => formatFunctions[f])}>
+        <Option key={0} value="seconds">Segundos</Option>
+        <Option key={1} value="minutes">Minutos</Option>
+        <Option key={1} value="hour">Hora</Option>
+        <Option key={1} value="day">Dia</Option>
+    </Select>
 
-    function changeTypeFilter(type) {
-        console.log(selectedTypes, type)
-        if (selectedTypes.includes(type)) setSelectedTypes(selectedTypes.filter(t => t !== type))
-        else setSelectedTypes([...selectedTypes, type])
+    const [facts, setFacts] = useState()
+
+    function getTweetType(tweet) {
+        if (tweet.retweet) return "Retweet"
+        else if (tweet.reply) return "Resposta"
+        else return "Original"
     }
 
     useEffect(() => {
         /** Backend's Request to get historical tweets*/
         TwitterService.find().then(data => {
-            console.log(data)
+
             data.forEach(d => {
                 d.date = new Date(parseInt(d.date.$numberLong))
                 d.type = getTweetType(d)
@@ -77,33 +90,37 @@ export function StaticMainContainer() {
     }, [data])
 
     useEffect(() => {
-        MapController.clearMarkers()
-        draw()
-
-    }, [selectedTypes])
+        if (facts) {
+            drawSeriesChart(facts).render()
+        }
+    }, [dateFormater, facts])
 
     useEffect(() => {
         MapController.clearMarkers()
         if (!isEmpty(data)) {
+
             if (barChart)
                 barChart.on('filtered.monitor', (_, type) => {
                     if (selectedKeys.includes(type))
                         setSelectedKeys(selectedKeys.filter(k => k !== type))
                     else setSelectedKeys([...selectedKeys, type])
                 });
-            // drawBarChart();
-            // drawSeriesChart();
+            if (pieChart)
+                pieChart.on('filtered.monitor', (_, type) => {
+                    if (selectedTypes.includes(type))
+                        setSelectedTypes(selectedTypes.filter(k => k !== type))
+                    else setSelectedTypes([...selectedTypes, type])
+                });
+
             drawWordChart();
             addMarkers();
-            configStats()
         }
         // draw()
-    }, [selectedKeys])
+    }, [selectedKeys, selectedTypes])
 
     //** Initializations */
     function init() {
         MapController.createMap("map");
-
         draw();
     }
 
@@ -126,8 +143,9 @@ export function StaticMainContainer() {
 
     function draw() {
         if (data) {
-            const factsData = (data || []).filter(typeFilter)
+            const factsData = (data || [])
             const facts = crossfilter(factsData)
+            setFacts(facts)
             // const idDimension = facts.dimension(d => d.id)
 
 
@@ -139,6 +157,7 @@ export function StaticMainContainer() {
             configStats();
             addMarkers();
             drawWordChart();
+            drawSunburst(facts);
 
             dc.renderAll()
         }
@@ -159,8 +178,9 @@ export function StaticMainContainer() {
         const [min, max] = dv.range('value');
 
         const colorRange = d3.scaleQuantize()
-            .domain([min, max])
-            .range(blues)
+
+            .domain(quantileSeq(dv.rows.map(d => d.value), [0, 0.33, 0.66, 1]))
+            .range(wordsColors)
 
         if (wordChart.current) {
             wordChart.current.destroy()
@@ -204,7 +224,6 @@ export function StaticMainContainer() {
         const dv = new DataSet.View().source(wc);
 
         const [min, max] = dv.range('value');
-        const mean = 10
         dv.transform({
             spiral: 'rectangular',
             type: 'tag-cloud',
@@ -258,39 +277,82 @@ export function StaticMainContainer() {
         });
 
         setBarChart(chart)
+
     }
 
     /** Series Chart */
     function drawSeriesChart(facts) {
-        const timeDimension = facts.dimension(d => [d.key, d.date])
+        const timeDimension = facts.dimension(d => [d.key, dateFormater(d.date)])
         const timeCountGroup = timeDimension.group()
         const timeScale = d3
             .scaleTime()
-            .domain([d3.min(data || [], d => d.date), d3.max(data || [], d => d.date)])
+            .domain([d3.min(data || [], d => dateFormater(d.date)), d3.max(data || [], d => dateFormater(d.date))])
 
         const dateSeriesChart = new dc.SeriesChart(d3.select("#series"));
         dateSeriesChart
             .width(1200)
             .height(300)
-            .chart(function (c) { return new dc.LineChart(c).curve(d3.curveCardinal); })
+            .chart(function (c) { return new dc.LineChart(c).curve(d3.curveCardinal).renderDataPoints(true); })
             .x(timeScale)
-            .margins({ top: 10, right: 10, bottom: 50, left: 30 })
+            .margins({ top: 10, right: 10, bottom: 50, left: 80 })
             .brushOn(false)
-            // .yAxisLabel("Número de Tweet")
-            // .xAxisLabel("Time")
+            .yAxisLabel("Quantidade de Tweets")
+            .xAxisLabel("Horário")
             .clipPadding(10)
             .elasticY(true)
             .dimension(timeDimension)
             .group(timeCountGroup)
             // .mouseZoomable(true)
+            // .brushOn(true)
             .seriesAccessor(function (d) { return d.key[0]; })
             .keyAccessor(function (d) { return d.key[1]; })
             .valueAccessor(function (d) { return +d.value; })
-            // .legend(dc.legend().x(350).y(350).itemHeight(13).gap(5).horizontal(1).legendWidth(140).itemWidth(70))
+            .legend(dc.legend().x(80).y(284).itemHeight(13).autoItemWidth(true).horizontal(1))
             .colors(k => coloredKeys[k])
             .colorAccessor(d => d.key[0]);
 
+        return dateSeriesChart
+
+        // dateSeriesChart.on('filtered.monitor', e => {
+        //     console.log(dateFilter, e._filters[0])
+        //     if (e._filters[0]) {
+        //         const [from, to] = e._filters[0].map(t => t.getTime())
+
+        //         setDateFilter(() => t => t.date.getTime() >= from && t.date.getTime() <= to)
+        //     } else {
+        //         setDateFilter(() => t => true)
+        //     }
+
+        // });
+
         // dateSeriesChart.xAxis().ticks(4)
+    }
+
+    function drawSunburst(facts) {
+        const typesDimension = facts.dimension(d => d.type)
+        const typesCountGroup = typesDimension.group()
+
+        const colorScale = d3.scaleOrdinal()
+            .domain(["Resposta", "Retweet", "Original"])
+            .range(["#46EDC8", "#374D7C", "#FDF289"])
+
+        var chart = dc.pieChart(d3.select("#sunburst"));
+        chart.width(600)
+            .height(295)
+            .innerRadius(0)
+            .dimension(typesDimension)
+            .group(typesCountGroup)
+            .colors(colorScale)
+            .colorAccessor(d => d.key)
+            .legend(dc.legend())
+
+        chart.on('filtered.monitor', (_, type) => {
+            if (selectedTypes.includes(type))
+                setSelectedTypes(selectedTypes.filter(k => k !== type))
+            else setSelectedTypes([...selectedTypes, type])
+        });
+
+        setPieChart(chart)
     }
 
 
@@ -308,15 +370,21 @@ export function StaticMainContainer() {
             if (tweet.retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
             else if (tweet.reply) metrics.current.replies = (metrics.current.replies || 0) + 1
             else metrics.current.original = (metrics.current.original || 0) + 1
-        })
 
-        filteredData.forEach(function (tweet) {
             metrics.current.users.add(tweet.userName);
             if (tweet.position) metrics.current.geolocated = (metrics.current.geolocated || 0) + 1
             metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + tweet.mediasAndLink
             metrics.current.mentions = (metrics.current.mentions || 0) + tweet.mentions
             metrics.current.total = (metrics.current.total || 0) + 1
-        });
+        })
+
+        // filteredData.forEach(function (tweet) {
+        //     metrics.current.users.add(tweet.userName);
+        //     if (tweet.position) metrics.current.geolocated = (metrics.current.geolocated || 0) + 1
+        //     metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + tweet.mediasAndLink
+        //     metrics.current.mentions = (metrics.current.mentions || 0) + tweet.mentions
+        //     metrics.current.total = (metrics.current.total || 0) + 1
+        // });
 
         setStatistics({
             users: metrics.current.users.size,
@@ -371,7 +439,11 @@ export function StaticMainContainer() {
 
 
     function addColorToData(data) {
-        const keyColor = {}
+        const keyColor = {
+            // retweet: "white",
+            // reply: "magenta",
+            // original: "black"
+        }
         let i = 0
 
         const newData = data.map(t => {
@@ -423,12 +495,12 @@ export function StaticMainContainer() {
                 {/* <CheckboxGroup options={Object.keys(coloredKeys)} value={selectedKeys} onChange={setSelectedKeys} /> */}
             </PageHeader>
             <Card title="Métricas" bordered={false}>
-                <TweetsStatistics statistics={statistics} selectable={true} onClick={changeTypeFilter} selected={selectedTypes} />
+                <TweetsStatistics statistics={statistics} selectable={false} />
             </Card>
 
             <br />
             <Row>
-                <Card title="Contagem temporal" bordered={false}>
+                <Card title="Contagem temporal" bordered={false} extra={dateFormatSelect}>
                     <div className="static-series-container">
                         <div id="series"></div>
                     </div>
@@ -437,11 +509,12 @@ export function StaticMainContainer() {
             <br />
             <Row gutter={[16, 16]}>
                 <Col span={12}>
-                    <Card title="Palavras mais utilizadas" bordered={false}>
-                        <div className="word-cloud-container">
-                            <div id="word-cloud"></div>
-                        </div>
+                    <Card title="Localização" bordered={false}>
+                        <div className="map-container">
+                            <div id="map"></div>
+                        </div >
                     </Card>
+
 
                 </Col>
                 <Col span={12}>
@@ -454,12 +527,29 @@ export function StaticMainContainer() {
             </Row>
             <br />
 
+            <Row gutter={[16, 16]}>
+                <Col span={12}>
+                    <Card title="Contagem por tipo" bordered={false}>
+                        <div className="static-sunburst-container">
+                            <div id="sunburst"></div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col span={12}>
+                    <Card title="Palavras mais utilizadas" bordered={false}>
+                        <div className="word-cloud-container">
+                            <div id="word-cloud"></div>
+                        </div>
+                    </Card>
+
+
+                </Col>
+
+            </Row>
+            <br />
+
             <Row>
-                <Card title="Localização" bordered={false}>
-                    <div className="map-container">
-                        <div id="map"></div>
-                    </div >
-                </Card>
+
             </Row>
         </div>
     );

@@ -4,6 +4,14 @@
   font-size: 15px;
 }
 
+.ant-card-extra {
+  .ant-select-selection {
+    max-width: 150px;
+    background-color: rgba($color: #dadada, $alpha: 0.1);
+                color: #dadada;
+  }
+}
+
 .static-series-container {
 
   g.stack._0>path {
@@ -15,6 +23,17 @@
 //     // display: none;
 //   }
 
+}
+
+.static-sunburst-container {
+  g.pie-slice.deselected {
+    opacity: 0.2;
+  }
+
+  text.pie-label {
+    fill: #dadada;
+    display: none;
+  }
 }
 
 .static-bars-container{
@@ -50,4 +69,12 @@
 
 path.line {
   fill: none;
+}
+
+.dc-legend-item {
+  fill: #dadada;
+  
+  text {
+    // font-weight: bold;
+  }
 }
