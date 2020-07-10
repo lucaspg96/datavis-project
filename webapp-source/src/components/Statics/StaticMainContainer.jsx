@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, PageHeader, Row, Col, Card, Checkbox, Select, Icon } from 'antd';
+import { Input, PageHeader, Row, Col, Card, Checkbox, Select, Icon, Tooltip } from 'antd';
 import { useRef } from 'react';
 import crossfilter from 'crossfilter';
 import { useState } from 'react';
@@ -68,6 +68,17 @@ export function StaticMainContainer({ onBack }) {
         <Option key={1} value="hour">Hora</Option>
         <Option key={1} value="day">Dia</Option>
     </Select>
+
+    const warningTooltip = <Tooltip title="AVISO: enquanto o zoom está ativo, outros gráficos não conseguem aplicar seus filtros a este">
+        <Icon type="warning" />
+    </Tooltip>
+
+    const clearZoomButton = <Tooltip title="Remover zoom">
+
+        <Icon onClick={_ => setDateInterval()} className="white-icon" type="zoom-out" />
+
+    </Tooltip >
+
 
     const [facts, setFacts] = useState()
 
@@ -577,7 +588,10 @@ export function StaticMainContainer({ onBack }) {
 
             <br />
             <Row>
-                <Card title="Contagem temporal" bordered={false} extra={dateFormatSelect}>
+                <Card title={<>
+                    Contagem temporal {dateInterval && <> {warningTooltip} {clearZoomButton} </>}
+                </>}
+                    bordered={false} extra={dateFormatSelect}>
                     <div className="static-series-container">
                         <div id="series"></div>
 
