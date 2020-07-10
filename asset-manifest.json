@@ -1,25 +1,25 @@
 {
   "files": {
-    "main.css": "/datavis-project/static/css/main.a50e11fc.chunk.css",
-    "main.js": "/datavis-project/static/js/main.950751fb.chunk.js",
-    "main.js.map": "/datavis-project/static/js/main.950751fb.chunk.js.map",
+    "main.css": "/datavis-project/static/css/main.4cf3bf0e.chunk.css",
+    "main.js": "/datavis-project/static/js/main.0ef62e47.chunk.js",
+    "main.js.map": "/datavis-project/static/js/main.0ef62e47.chunk.js.map",
     "runtime-main.js": "/datavis-project/static/js/runtime-main.7769b6a8.js",
     "runtime-main.js.map": "/datavis-project/static/js/runtime-main.7769b6a8.js.map",
     "static/css/2.1bfbd074.chunk.css": "/datavis-project/static/css/2.1bfbd074.chunk.css",
     "static/js/2.04d178d6.chunk.js": "/datavis-project/static/js/2.04d178d6.chunk.js",
     "static/js/2.04d178d6.chunk.js.map": "/datavis-project/static/js/2.04d178d6.chunk.js.map",
     "index.html": "/datavis-project/index.html",
-    "precache-manifest.2339416e9d2e17b37df959e9715a3c3a.js": "/datavis-project/precache-manifest.2339416e9d2e17b37df959e9715a3c3a.js",
+    "precache-manifest.2dec2dde416455c3c76f51c5c5d81d96.js": "/datavis-project/precache-manifest.2dec2dde416455c3c76f51c5c5d81d96.js",
     "service-worker.js": "/datavis-project/service-worker.js",
     "static/css/2.1bfbd074.chunk.css.map": "/datavis-project/static/css/2.1bfbd074.chunk.css.map",
-    "static/css/main.a50e11fc.chunk.css.map": "/datavis-project/static/css/main.a50e11fc.chunk.css.map",
+    "static/css/main.4cf3bf0e.chunk.css.map": "/datavis-project/static/css/main.4cf3bf0e.chunk.css.map",
     "static/js/2.04d178d6.chunk.js.LICENSE.txt": "/datavis-project/static/js/2.04d178d6.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.7769b6a8.js",
     "static/css/2.1bfbd074.chunk.css",
     "static/js/2.04d178d6.chunk.js",
-    "static/css/main.a50e11fc.chunk.css",
-    "static/js/main.950751fb.chunk.js"
+    "static/css/main.4cf3bf0e.chunk.css",
+    "static/js/main.0ef62e47.chunk.js"
   ]
 }
