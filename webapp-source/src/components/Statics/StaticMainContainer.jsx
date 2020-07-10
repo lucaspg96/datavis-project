@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, PageHeader, Row, Col, Card, Checkbox, Select } from 'antd';
+import { Input, PageHeader, Row, Col, Card, Checkbox, Select, Icon } from 'antd';
 import { useRef } from 'react';
 import crossfilter from 'crossfilter';
 import { useState } from 'react';
@@ -31,9 +31,10 @@ const formatFunctions = {
     day: d3.timeDay
 }
 
-export function StaticMainContainer() {
+export function StaticMainContainer({ onBack }) {
 
     const [data, setData] = useState();
+    const [offline, setOffline] = useState()
 
     const [selectedKeys, setSelectedKeys] = useState([])
     const keyFilter = t => selectedKeys.length === 0 || selectedKeys.includes(t.key)
@@ -86,8 +87,12 @@ export function StaticMainContainer() {
 
     useEffect(() => {
         /** Backend's Request to get historical tweets*/
-        TwitterService.find().then(processData)
+        TwitterService.find().then(data => {
+            setOffline(false)
+            processData(data)
+        })
             .catch(_ => {
+                setOffline(true)
                 TwitterService.getStaticData().then(processData)
             })
     }, [])
@@ -556,10 +561,14 @@ export function StaticMainContainer() {
 
 
     /** Render */
-
     return (
         <div className="main-container">
-            <PageHeader title="Tweets Analyzer" subTitle="Análise histórica dos tweets consumidos">
+            <PageHeader
+                title="Tweets Analyzer"
+                subTitle="Análise histórica dos tweets consumidos"
+                onBack={onBack}
+                backIcon={offline ? false : <Icon type="arrow-left" />}
+            >
                 {/* <CheckboxGroup options={Object.keys(coloredKeys)} value={selectedKeys} onChange={setSelectedKeys} /> */}
             </PageHeader>
             <Card title="Métricas" bordered={false}>

@@ -6,8 +6,8 @@ import { StaticMainContainer } from './components/Statics/StaticMainContainer';
 function App() {
   return (
     <div className="App">
-      <StaticMainContainer />
-      {/* <MainContainer /> */}
+      {/* <StaticMainContainer /> */}
+      <MainContainer />
     </div>
   );
 }
