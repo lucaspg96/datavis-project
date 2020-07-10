@@ -18,7 +18,7 @@ const { Search } = Input;
 const graphRefreshTimeout = 1500
 const timeWindowSize = 0.5 * 60 * 1000
 
-export default function RealTimeContainer() {
+export default function RealTimeContainer({ onBack }) {
 
     const [statistics, setStatistics] = useState({});
     const [targetTime, setTargetTime] = useState();
@@ -270,8 +270,14 @@ export default function RealTimeContainer() {
         setBarChart(chart)
     }
 
+    function handleBack() {
+        Object.keys(count.current).map(handleRemove)
+
+        onBack()
+    }
+
     return <div className="main-container">
-        <PageHeader title="Tweets monitor" subTitle="Monitore assuntos em tempo real (ou quase isso)">
+        <PageHeader title="Tweets monitor" subTitle="Monitore assuntos em tempo real (ou quase isso)" onBack={handleBack}>
 
             <div className="trends-container">
                 <TrendsContainer onClick={addSocket} disabled={takenColors.length == 2} />

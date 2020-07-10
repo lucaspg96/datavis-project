@@ -41,6 +41,8 @@
 body {
   background-color: black !important;
   color: "#DADADA" !important;
-  width: 1366px !important;
-  margin: 0 auto !important;
+}
+
+.ant-page-header-back-button{
+  color: #dadada !important;
 }

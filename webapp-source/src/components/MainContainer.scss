@@ -1,0 +1,47 @@
+.ant-tabs-nav-scroll{
+    margin-top: 10px;
+    text-align: left;
+    margin-left: 10px;
+}
+
+.ant-drawer-wrapper-body {
+    background-color: #141414 !important;
+}
+
+.view-container {
+    width: 1366px !important;
+    margin: 0 auto !important;
+
+}
+
+.ant-drawer-wrapper-body {
+    .ant-drawer-header{
+        background-color: #303030;
+        border: none;
+
+        .ant-drawer-title{
+            color: #dadada;
+        }
+
+        .ant-drawer-close {
+            color: #dadada;
+        }
+    }
+
+    .ant-drawer-body {
+        padding: 0;
+        padding-top: 10px;
+        button {
+            width: 100%;
+            margin-bottom: 10px;
+
+            color: #dadada;
+            font-weight: bold;
+            text-align: left;
+
+            &:hover {
+                background-color: rgba(#dadada, 0.2);
+            }
+        }
+    }
+}
