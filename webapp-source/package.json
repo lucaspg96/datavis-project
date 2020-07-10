@@ -2,7 +2,7 @@
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://github.com/lucaspg96/datavis-project",
+  "homepage": "https://lucaspg96.github.io/lucaspg96/datavis-project/",
   "dependencies": {
     "@ansur/leaflet-pulse-icon": "^0.1.1",
     "@antv/g2": "^4.0.10",
@@ -30,6 +30,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build && cp -r build/* ../src/main/resources/webapp",
+    "build:pages": "react-scripts build && cp -r build/* ../",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
