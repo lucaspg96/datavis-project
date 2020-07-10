@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/lucaspg96/datavis-project/static/css/main.a50e11fc.chunk.css",
+    "main.js": "/lucaspg96/datavis-project/static/js/main.60456d2a.chunk.js",
+    "main.js.map": "/lucaspg96/datavis-project/static/js/main.60456d2a.chunk.js.map",
+    "runtime-main.js": "/lucaspg96/datavis-project/static/js/runtime-main.cc82aa46.js",
+    "runtime-main.js.map": "/lucaspg96/datavis-project/static/js/runtime-main.cc82aa46.js.map",
+    "static/css/2.1bfbd074.chunk.css": "/lucaspg96/datavis-project/static/css/2.1bfbd074.chunk.css",
+    "static/js/2.85619697.chunk.js": "/lucaspg96/datavis-project/static/js/2.85619697.chunk.js",
+    "static/js/2.85619697.chunk.js.map": "/lucaspg96/datavis-project/static/js/2.85619697.chunk.js.map",
+    "index.html": "/lucaspg96/datavis-project/index.html",
+    "precache-manifest.4c514d57025faf5fe3fe5a846b92f36f.js": "/lucaspg96/datavis-project/precache-manifest.4c514d57025faf5fe3fe5a846b92f36f.js",
+    "service-worker.js": "/lucaspg96/datavis-project/service-worker.js",
+    "static/css/2.1bfbd074.chunk.css.map": "/lucaspg96/datavis-project/static/css/2.1bfbd074.chunk.css.map",
+    "static/css/main.a50e11fc.chunk.css.map": "/lucaspg96/datavis-project/static/css/main.a50e11fc.chunk.css.map",
+    "static/js/2.85619697.chunk.js.LICENSE.txt": "/lucaspg96/datavis-project/static/js/2.85619697.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.cc82aa46.js",
+    "static/css/2.1bfbd074.chunk.css",
+    "static/js/2.85619697.chunk.js",
+    "static/css/main.a50e11fc.chunk.css",
+    "static/js/main.60456d2a.chunk.js"
+  ]
+}

@@ -1,25 +1,25 @@
 {
   "files": {
-    "main.css": "/static/css/main.b12ace22.chunk.css",
-    "main.js": "/static/js/main.454f29ee.chunk.js",
-    "main.js.map": "/static/js/main.454f29ee.chunk.js.map",
-    "runtime-main.js": "/static/js/runtime-main.83c3e0c4.js",
-    "runtime-main.js.map": "/static/js/runtime-main.83c3e0c4.js.map",
-    "static/css/2.1bfbd074.chunk.css": "/static/css/2.1bfbd074.chunk.css",
-    "static/js/2.56daa57a.chunk.js": "/static/js/2.56daa57a.chunk.js",
-    "static/js/2.56daa57a.chunk.js.map": "/static/js/2.56daa57a.chunk.js.map",
-    "index.html": "/index.html",
-    "precache-manifest.42b4eccc66ae2e198da7eba7e3df58ff.js": "/precache-manifest.42b4eccc66ae2e198da7eba7e3df58ff.js",
-    "service-worker.js": "/service-worker.js",
-    "static/css/2.1bfbd074.chunk.css.map": "/static/css/2.1bfbd074.chunk.css.map",
-    "static/css/main.b12ace22.chunk.css.map": "/static/css/main.b12ace22.chunk.css.map",
-    "static/js/2.56daa57a.chunk.js.LICENSE.txt": "/static/js/2.56daa57a.chunk.js.LICENSE.txt"
+    "main.css": "/lucaspg96/datavis-project/static/css/main.a50e11fc.chunk.css",
+    "main.js": "/lucaspg96/datavis-project/static/js/main.60456d2a.chunk.js",
+    "main.js.map": "/lucaspg96/datavis-project/static/js/main.60456d2a.chunk.js.map",
+    "runtime-main.js": "/lucaspg96/datavis-project/static/js/runtime-main.cc82aa46.js",
+    "runtime-main.js.map": "/lucaspg96/datavis-project/static/js/runtime-main.cc82aa46.js.map",
+    "static/css/2.1bfbd074.chunk.css": "/lucaspg96/datavis-project/static/css/2.1bfbd074.chunk.css",
+    "static/js/2.85619697.chunk.js": "/lucaspg96/datavis-project/static/js/2.85619697.chunk.js",
+    "static/js/2.85619697.chunk.js.map": "/lucaspg96/datavis-project/static/js/2.85619697.chunk.js.map",
+    "index.html": "/lucaspg96/datavis-project/index.html",
+    "precache-manifest.4c514d57025faf5fe3fe5a846b92f36f.js": "/lucaspg96/datavis-project/precache-manifest.4c514d57025faf5fe3fe5a846b92f36f.js",
+    "service-worker.js": "/lucaspg96/datavis-project/service-worker.js",
+    "static/css/2.1bfbd074.chunk.css.map": "/lucaspg96/datavis-project/static/css/2.1bfbd074.chunk.css.map",
+    "static/css/main.a50e11fc.chunk.css.map": "/lucaspg96/datavis-project/static/css/main.a50e11fc.chunk.css.map",
+    "static/js/2.85619697.chunk.js.LICENSE.txt": "/lucaspg96/datavis-project/static/js/2.85619697.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/js/runtime-main.83c3e0c4.js",
+    "static/js/runtime-main.cc82aa46.js",
     "static/css/2.1bfbd074.chunk.css",
-    "static/js/2.56daa57a.chunk.js",
-    "static/css/main.b12ace22.chunk.css",
-    "static/js/main.454f29ee.chunk.js"
+    "static/js/2.85619697.chunk.js",
+    "static/css/main.a50e11fc.chunk.css",
+    "static/js/main.60456d2a.chunk.js"
   ]
 }
