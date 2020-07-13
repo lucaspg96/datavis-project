@@ -1,21 +1,42 @@
 import React from 'react'
-import { MapContainer } from './MapContainer/MapContainer';
-import { Tabs } from 'antd';
+import { Tabs, Drawer, Button } from 'antd';
 import 'antd/dist/antd.css';
-import "./MapContainer.scss";
-import CountContainer from './CountContainer/CountContainer';
+import "./MainContainer.scss";
+import RealTimeContainer from './RealTimeContainer/RealTimeContainer';
+import { useState } from 'react';
+import { StaticMainContainer } from './Statics/StaticMainContainer';
 
 const { TabPane } = Tabs;
 
 export default function MainContainer() {
-    return <Tabs defaultActiveKey="1"
-        type="card"
-    >
-        <TabPane tab="Mapa" key="1">
-            <MapContainer />
-        </TabPane>
-        <TabPane tab="Contagem" key="2">
-            <CountContainer />
-        </TabPane>
-    </Tabs>;
+
+    const [view, setView] = useState(<StaticMainContainer key={+ new Date()} onBack={() => setVisible(true)} />)
+    // const [view, setView] = useState(<RealTimeContainer key={+ new Date()} onBack={() => setVisible(true)} />)
+    const [visible, setVisible] = useState(false)
+
+    function setStaticView() {
+        setVisible(false)
+        setView(<StaticMainContainer key={+ new Date()} onBack={() => setVisible(true)} />)
+    }
+
+    function setRealTimeView() {
+        setVisible(false)
+        setView(<RealTimeContainer key={+ new Date()} onBack={() => setVisible(true)} />)
+    }
+
+    return <>
+        <Drawer
+            title="Selecione um painel"
+            placement="left"
+            visible={visible}
+            onClose={() => setVisible(false)}
+        >
+            <Button type="link" onClick={setStaticView}>Análise histórica</Button>
+            <Button type="link" onClick={setRealTimeView}>Análise em tempo real</Button>
+        </Drawer>
+
+        <div className="view-container">
+            {view}
+        </div>
+    </>;
 }

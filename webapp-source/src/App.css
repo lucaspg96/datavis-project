@@ -2,6 +2,7 @@
   text-align: center;
 }
 
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -35,4 +36,13 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+body {
+  background-color: black !important;
+  color: "#DADADA" !important;
+}
+
+.ant-page-header-back-button{
+  color: #dadada !important;
 }

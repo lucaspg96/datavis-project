@@ -1,0 +1,87 @@
+.map-legend {
+  color: #dadada;
+  font-weight: bolder;
+  font-size: 15px;
+}
+
+.ant-card-extra {
+  .ant-select-selection {
+    max-width: 150px;
+    background-color: rgba($color: #dadada, $alpha: 0.1);
+                color: #dadada;
+  }
+}
+
+.anticon-warning, .anticon-zoom-out {
+  color: #dadada;
+  margin-left: 10px;
+  font-size: 20px;
+  // vertical-align: middle;
+}
+
+.static-series-container {
+
+  g.stack._0>path {
+    stroke-width: 3px;
+  }
+  
+//   &>div>div>svg>g:nth-child(4)>g>g>g>g>g>g>text {
+//     fill: #dadada;
+//     // display: none;
+//   }
+
+}
+
+.static-sunburst-container {
+  g.pie-slice.deselected {
+    opacity: 0.2;
+  }
+
+  text.pie-label {
+    fill: #dadada;
+    display: none;
+  }
+}
+
+.static-bars-container{
+  height: 300px;
+
+  #bar>div>svg>g:nth-child(2)>g:nth-child(2)>g:first-child>g>text {
+      display: none;
+      // fill: #dadada;
+  }
+
+  &>div>div>svg>g:nth-child(4)>g>g>g>g>g text {
+    fill: #dadada;
+    // display: none;
+  }
+
+  rect.bar.deselected {
+    opacity: 0.2;
+  }
+}
+
+.ant-checkbox-group-item {
+  color: #dadada;
+}
+
+.axis.x, .axis.y{
+  color: #dadada;
+  font-size: 15px;
+}
+
+.y-axis-label, .x-axis-label {
+  fill: #dadada
+}
+
+path.line {
+  fill: none;
+}
+
+.dc-legend-item {
+  fill: #dadada;
+  
+  text {
+    // font-weight: bold;
+  }
+}

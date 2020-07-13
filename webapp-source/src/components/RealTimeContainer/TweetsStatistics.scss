@@ -1,0 +1,28 @@
+.tweets-statistics-container{
+  .ant-statistic {
+    .ant-statistic-title,
+    .ant-statistic-content {
+      color: #dadada;
+    }
+  }
+
+  .retweets {
+    border-left: 1px solid #dadada;
+  }
+
+  .selectable {
+    &:hover {
+      background-color:  rgba(#dadada, 0.2);
+      cursor: pointer;
+      border-radius: 5px;
+      border-left: 0px solid #dadada;
+    }
+  }
+
+  .selected {
+    background-color:  rgba(#dadada, 0.2);
+      cursor: pointer;
+      border-radius: 5px;
+      border-left: 0px solid #dadada;
+  }
+}
