@@ -1,25 +1,25 @@
 {
   "files": {
-    "main.css": "/datavis-project/static/css/main.4cf3bf0e.chunk.css",
-    "main.js": "/datavis-project/static/js/main.02beb05d.chunk.js",
-    "main.js.map": "/datavis-project/static/js/main.02beb05d.chunk.js.map",
-    "runtime-main.js": "/datavis-project/static/js/runtime-main.7769b6a8.js",
-    "runtime-main.js.map": "/datavis-project/static/js/runtime-main.7769b6a8.js.map",
-    "static/css/2.1bfbd074.chunk.css": "/datavis-project/static/css/2.1bfbd074.chunk.css",
-    "static/js/2.1db79fd3.chunk.js": "/datavis-project/static/js/2.1db79fd3.chunk.js",
-    "static/js/2.1db79fd3.chunk.js.map": "/datavis-project/static/js/2.1db79fd3.chunk.js.map",
-    "index.html": "/datavis-project/index.html",
-    "precache-manifest.eeff3387173f93aea6ffa15b6bfb742f.js": "/datavis-project/precache-manifest.eeff3387173f93aea6ffa15b6bfb742f.js",
-    "service-worker.js": "/datavis-project/service-worker.js",
-    "static/css/2.1bfbd074.chunk.css.map": "/datavis-project/static/css/2.1bfbd074.chunk.css.map",
-    "static/css/main.4cf3bf0e.chunk.css.map": "/datavis-project/static/css/main.4cf3bf0e.chunk.css.map",
-    "static/js/2.1db79fd3.chunk.js.LICENSE.txt": "/datavis-project/static/js/2.1db79fd3.chunk.js.LICENSE.txt"
+    "main.css": "/webapp/static/css/main.4cf3bf0e.chunk.css",
+    "main.js": "/webapp/static/js/main.dc58c0b2.chunk.js",
+    "main.js.map": "/webapp/static/js/main.dc58c0b2.chunk.js.map",
+    "runtime-main.js": "/webapp/static/js/runtime-main.4d3a413b.js",
+    "runtime-main.js.map": "/webapp/static/js/runtime-main.4d3a413b.js.map",
+    "static/css/2.1bfbd074.chunk.css": "/webapp/static/css/2.1bfbd074.chunk.css",
+    "static/js/2.2ebc7d5f.chunk.js": "/webapp/static/js/2.2ebc7d5f.chunk.js",
+    "static/js/2.2ebc7d5f.chunk.js.map": "/webapp/static/js/2.2ebc7d5f.chunk.js.map",
+    "index.html": "/webapp/index.html",
+    "precache-manifest.da7cf0e1686208409b34abbeb6bcf752.js": "/webapp/precache-manifest.da7cf0e1686208409b34abbeb6bcf752.js",
+    "service-worker.js": "/webapp/service-worker.js",
+    "static/css/2.1bfbd074.chunk.css.map": "/webapp/static/css/2.1bfbd074.chunk.css.map",
+    "static/css/main.4cf3bf0e.chunk.css.map": "/webapp/static/css/main.4cf3bf0e.chunk.css.map",
+    "static/js/2.2ebc7d5f.chunk.js.LICENSE.txt": "/webapp/static/js/2.2ebc7d5f.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/js/runtime-main.7769b6a8.js",
+    "static/js/runtime-main.4d3a413b.js",
     "static/css/2.1bfbd074.chunk.css",
-    "static/js/2.1db79fd3.chunk.js",
+    "static/js/2.2ebc7d5f.chunk.js",
     "static/css/main.4cf3bf0e.chunk.css",
-    "static/js/main.02beb05d.chunk.js"
+    "static/js/main.dc58c0b2.chunk.js"
   ]
 }

@@ -11,6 +11,7 @@ const { TabPane } = Tabs;
 export default function MainContainer() {
 
     const [view, setView] = useState(<StaticMainContainer key={+ new Date()} onBack={() => setVisible(true)} />)
+    // const [view, setView] = useState(<RealTimeContainer key={+ new Date()} onBack={() => setVisible(true)} />)
     const [visible, setVisible] = useState(false)
 
     function setStaticView() {
