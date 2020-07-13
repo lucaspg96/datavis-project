@@ -5,7 +5,7 @@ import crossfilter from 'crossfilter';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { Chart, registerShape, Util } from '@antv/g2';
-import { isEmpty } from 'lodash';
+import { isEmpty, max } from 'lodash';
 import DataSet from '@antv/data-set';
 import * as d3 from "d3";
 import * as dc from "dc";
@@ -28,7 +28,8 @@ const formatFunctions = {
     minutes: d3.timeMinute,
     seconds: d3.timeSecond,
     hour: d3.timeHour,
-    day: d3.timeDay
+    day: d3.timeDay,
+    identity: x => x
 }
 
 export function StaticMainContainer({ onBack }) {
@@ -61,12 +62,13 @@ export function StaticMainContainer({ onBack }) {
     const metrics = useRef({ users: new Set() })
     const [coloredKeys, setColors] = useState([]);
 
-    const [dateFormater, setDateFormater] = useState(() => formatFunctions.seconds)
-    const dateFormatSelect = <Select defaultValue={"seconds"} onChange={f => setDateFormater(() => formatFunctions[f])}>
-        <Option key={0} value="seconds">Segundos</Option>
-        <Option key={1} value="minutes">Minutos</Option>
-        <Option key={1} value="hour">Hora</Option>
-        <Option key={1} value="day">Dia</Option>
+    const [dateFormater, setDateFormater] = useState(() => formatFunctions.identity)
+    const dateFormatSelect = <Select defaultValue={"identity"} onChange={f => setDateFormater(() => formatFunctions[f])}>
+        <Option key={0} value="identity">Momento exato</Option>
+        <Option key={1} value="seconds">Segundos</Option>
+        <Option key={2} value="minutes">Minutos</Option>
+        <Option key={3} value="hour">Hora</Option>
+        <Option key={4} value="day">Dia</Option>
     </Select>
 
     const warningTooltip = <Tooltip title="AVISO: enquanto o zoom está ativo, outros gráficos não conseguem aplicar seus filtros a este">
@@ -93,6 +95,9 @@ export function StaticMainContainer({ onBack }) {
             d.date = new Date(parseInt(d.date.$numberLong))
             d.type = getTweetType(d)
         });
+
+        // data.sort((a, b) => b..$numberLong - a.date)
+        // console.log(data)
         setData(addColorToData(data))
     }
 
@@ -307,7 +312,8 @@ export function StaticMainContainer({ onBack }) {
         const keyDimension = facts.dimension(d => d.key)
         const keyCountGroup = keyDimension.group()
 
-        const keyScale = d3.scaleOrdinal().domain(Object.keys(coloredKeys))
+        const visibleKeys = keyCountGroup.all().map(d => d.key)
+        const keyScale = d3.scaleOrdinal().domain(visibleKeys)
 
         const chart = dc.barChart(d3.select("#bar"))
         chart
@@ -322,13 +328,38 @@ export function StaticMainContainer({ onBack }) {
             // .centerBar(true)
             .gap(50)
             .renderHorizontalGridLines(true)
-            .group(keyCountGroup, 'Contagem dos tipos de crimes')
+            .group(keyCountGroup)
+            .renderlet(function (chart) {
+                // console.log(chart.selectAll("g.x text").size())
+                chart.selectAll("g.x text")
+                    // .attr('dx', '-30')
+                    // .attr('transform', "rotate(-45)");
+                    .text(k => {
+                        const maxChars = 45;
+                        let n = chart.selectAll("g.x text").size()
+                        if (n <= 3) return k
+                        else {
+                            const charsByKey = Math.min(12, maxChars / n)
+                            // console.log(n, maxChars, charsByKey)
+                            if (charsByKey <= 3) return "..."
+                            else {
+                                if (k.length <= charsByKey) return k
+                                return k.slice(0, charsByKey - 3) + "..."
+                            }
+                        }
+
+
+                    })
+
+            });
 
         chart.on('filtered.monitor', (_, type) => {
             if (selectedKeys.includes(type))
                 setSelectedKeys(selectedKeys.filter(k => k !== type))
             else setSelectedKeys([...selectedKeys, type])
         });
+
+        chart.xAxis().ticks(4)
 
         setBarChart(chart)
         return chart;
@@ -360,10 +391,10 @@ export function StaticMainContainer({ onBack }) {
 
         dateSeriesChart
             .width(1200)
-            .height(300)
-            .chart(function (c) { return new dc.LineChart(c).curve(d3.curveCardinal); })
+            .height(400)
+            .chart(function (c) { return new dc.LineChart(c); })
             .x(timeScale)
-            .margins({ top: 10, right: 10, bottom: 50, left: 80 })
+            .margins({ top: 80, right: 10, bottom: 40, left: 40 })
             .brushOn(false)
             .yAxisLabel("Quantidade de Tweets")
             .xAxisLabel("Horário")
@@ -372,16 +403,17 @@ export function StaticMainContainer({ onBack }) {
             .dimension(timeDimension)
             .group(timeCountGroup)
             .mouseZoomable(true)
+            .ordering(d => d.key[1])
 
             // .rangeChart(rangeChart)
             .seriesAccessor(function (d) { return d.key[0]; })
             .keyAccessor(function (d) { return d.key[1]; })
             .valueAccessor(function (d) { return +d.value; })
-            .legend(dc.legend().x(80).y(284).itemHeight(13).autoItemWidth(true).horizontal(1))
+            .legend(dc.legend().x(80).y(0).itemHeight(13).autoItemWidth(true).horizontal(1))
             .colors(k => coloredKeys[k])
             .colorAccessor(d => d.key[0]);
 
-        dateSeriesChart.on("filtered.monitor", (_, dateInterval) => {
+        dateSeriesChart.on("filtered.monitor", (e, dateInterval) => {
             if (isEmpty(dateInterval)) setDateInterval()
             else {
                 if (dateInterval[0].getTime() === minDate.getTime() && dateInterval[1].getTime() === maxDate.getTime())

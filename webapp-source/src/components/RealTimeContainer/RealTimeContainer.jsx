@@ -82,6 +82,7 @@ export default function RealTimeContainer({ onBack }) {
         });
 
         SocketController.addListenner("map", tweet => {
+            if (tweet.position) console.log(tweet)
             MapController.addMarker(tweet);
         });
 
