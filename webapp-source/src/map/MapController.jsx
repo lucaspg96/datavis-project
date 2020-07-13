@@ -2,10 +2,20 @@ import { Comment } from 'antd';
 import L from 'leaflet';
 import ReactDOMServer from 'react-dom/server'
 import React from 'react';
+import * as d3 from 'd3';
 
 var map = null;
+var dataWithoutPosition = 0;
+var legend = undefined;
+var markersLayer = undefined
 
 export function createMap(containerId) {
+    if (map) {
+        markersLayer = undefined
+        dataWithoutPosition = 0
+        map.remove()
+        legend = undefined
+    }
     map = L.map(containerId, {
         center: [0, 0],
         zoom: 1,
@@ -16,6 +26,14 @@ export function createMap(containerId) {
         ]
     })
 
+}
+
+export function getMap() {
+    return map;
+}
+
+export function getMarkersLayer() {
+    return markersLayer;
 }
 
 function createPopup(tweet) {
@@ -34,22 +52,72 @@ function createPopup(tweet) {
     );
 }
 
-export function createMarker(tweet, duration = 20000) {
-    if (tweet.position) {
+export function clearMarkers() {
+    if (markersLayer) markersLayer.clearLayers()
+    dataWithoutPosition = 0;
+}
 
-        const marker = L.marker(tweet.position, {
-            icon: L.divIcon({
-                className: 'css-icon',
-                html: `<div class="tweet-map-marker"
-                style="background-color:${tweet.color}"></div>`
-            })
-        })
-            .addTo(map)
-            .bindPopup(createPopup(tweet))
+export function createMarker(tweet) {
 
-        setTimeout(() => {
-            marker.remove()
-        }, duration)
+    if (!markersLayer) {
+        markersLayer = L.layerGroup().addTo(map)
     }
 
+    const marker = L.marker(tweet.position, {
+        icon: L.divIcon({
+            className: 'css-icon',
+            html: `<div class="tweet-map-marker"
+            style="background-color:${tweet.color}"></div>`
+        })
+    })
+        .bindPopup(createPopup(tweet))
+
+    // marker.id = tweet.id
+    // console.log(marker)
+
+    return marker
+
+}
+
+export function addMarker(tweet, duration = 20000, staticMap = false) {
+
+    if (!markersLayer) {
+        markersLayer = L.layerGroup().addTo(map)
+    }
+
+    if (tweet.position) {
+        const marker = createMarker(tweet)
+
+        marker.addTo(markersLayer)
+
+        if (!staticMap) {
+            setTimeout(() => {
+                marker.remove()
+            }, duration)
+        }
+    }
+    else {
+        dataWithoutPosition += 1
+        updateLegend()
+    }
+}
+
+function updateLegend() {
+    const text = (dataWithoutPosition > 1) ? `${dataWithoutPosition} tweets sem localização` : `${dataWithoutPosition} tweet sem localização`;
+    if (legend) {
+        if (dataWithoutPosition === 0) legend.remove()
+        else d3.select(".map-legend")
+            .text(text)
+    }
+    else {
+        legend = L.control({ position: 'bottomright' });
+        legend.onAdd = map => {
+            const div = L.DomUtil.create("div", "map-legend")
+            div.innerHTML += text
+
+            return div
+        }
+
+        legend.addTo(map)
+    }
 }

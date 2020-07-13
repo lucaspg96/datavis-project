@@ -2,6 +2,7 @@
   text-align: center;
 }
 
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -40,4 +41,8 @@
 body {
   background-color: black !important;
   color: "#DADADA" !important;
+}
+
+.ant-page-header-back-button{
+  color: #dadada !important;
 }

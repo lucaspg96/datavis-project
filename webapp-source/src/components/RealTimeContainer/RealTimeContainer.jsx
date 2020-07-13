@@ -7,17 +7,18 @@ import { useEffect } from 'react';
 import { Input, Spin, Tag, PageHeader, Row, Col, Card } from 'antd';
 import { Chart } from '@antv/g2';
 import { isEmpty, sum } from 'rambda';
-import * as SocketController from '../../socket/SocketController';
+import * as SocketController from '../../services/SocketController';
 import * as MapController from '../../map/MapController';
 import CountDown from 'ant-design-pro/lib/CountDown';
 import TweetsStatistics from './TweetsStatistics';
+import TrendsContainer from './TrendsContainer';
 
 const { Search } = Input;
 
 const graphRefreshTimeout = 1500
 const timeWindowSize = 0.5 * 60 * 1000
 
-export default function RealTimeContainer() {
+export default function RealTimeContainer({ onBack }) {
 
     const [statistics, setStatistics] = useState({});
     const [targetTime, setTargetTime] = useState();
@@ -40,12 +41,14 @@ export default function RealTimeContainer() {
     ];
 
     const [takenColors, setTakenColors] = useState([]);
+    const keyColor = useRef([]);
 
     const data = useRef([])
     const count = useRef({})
 
     function addSocket(keyword = "") {
         setSearch("")
+        console.log("socket:", keyword)
         const color = colors.filter(c => !takenColors.map(c => c[1]).includes(c))[0]
         count.current[keyword] = { value: 0, color };
         setTakenColors([...takenColors, [keyword, color]])
@@ -63,7 +66,8 @@ export default function RealTimeContainer() {
             total: metrics.current.total,
             mentions: metrics.current.mentions,
             geolocated: metrics.current.geolocated,
-            replies: metrics.current.replies
+            replies: metrics.current.replies,
+            originals: metrics.current.original
         })
 
         setTargetTime(new Date().getTime() + graphRefreshTimeout)
@@ -78,13 +82,15 @@ export default function RealTimeContainer() {
         });
 
         SocketController.addListenner("map", tweet => {
-            MapController.createMarker(tweet);
+            if (tweet.position) console.log(tweet)
+            MapController.addMarker(tweet);
         });
 
         SocketController.addListenner("metrics", ({ userName, retweet, reply, mediasAndLink, mentions, position }) => {
             metrics.current.users.add(userName)
             if (retweet) metrics.current.retweets = (metrics.current.retweets || 0) + 1
-            if (reply) metrics.current.replies = (metrics.current.replies || 0) + 1
+            else if (reply) metrics.current.replies = (metrics.current.replies || 0) + 1
+            else metrics.current.original = (metrics.current.original || 0) + 1
             if (position) metrics.current.geolocated = (metrics.current.geolocated || 0) + 1
             metrics.current.mediasAndLink = (metrics.current.mediasAndLink || 0) + mediasAndLink
             metrics.current.total = (metrics.current.total || 0) + 1
@@ -102,6 +108,8 @@ export default function RealTimeContainer() {
         metrics.current.users = new Set();
         data.current.splice(0, data.current.length)
         Object.keys(count.current).forEach(k => count.current[k].key = 0)
+        MapController.clearMarkers();
+        keyColor.current = takenColors
     }, [takenColors])
 
     function getSeriesData() {
@@ -154,8 +162,15 @@ export default function RealTimeContainer() {
         chart
             .line()
             .position('date*value')
-            .color('color', c => c)
+            .color('keyword', k => {
+                return keyColor.current.filter(c => c[0] === k)[0][1]
+            })
             .label(false)
+
+        chart.tooltip({
+            showCrosshairs: true,
+            shared: true,
+        });
 
         chart.axis('date', {
             animateOption: {
@@ -238,7 +253,9 @@ export default function RealTimeContainer() {
         chart
             .interval()
             .position('key*value')
-            .color('color', c => c)
+            .color('key', k => {
+                return keyColor.current.filter(c => c[0] === k)[0][1]
+            })
             .animate({
                 appear: {
                     duration: 1000,
@@ -254,13 +271,24 @@ export default function RealTimeContainer() {
         setBarChart(chart)
     }
 
-    return <div className="main-container">
-        <PageHeader title="Tweets monitor" subTitle="Monitore assuntos em tempo real (ou quase isso)">
-            <div className="tweets-search-container">
+    function handleBack() {
+        Object.keys(count.current).map(handleRemove)
 
+        onBack()
+    }
+
+    return <div className="main-container">
+        <PageHeader title="Tweets monitor" subTitle="Monitore assuntos em tempo real (ou quase isso)" onBack={handleBack}>
+
+            <div className="trends-container">
+                <TrendsContainer onClick={addSocket} disabled={takenColors.length == 2} />
+            </div>
+
+            <div className="tweets-search-container">
                 <Search
                     enterButton
-                    placeholder="Entre um tema"
+                    disabled={takenColors.length == 2}
+                    placeholder="Ou entre seu"
                     onSearch={addSocket}
                     value={search}
                     onChange={e => setSearch(e.target.value)}

@@ -1,10 +1,14 @@
 import React from 'react';
-import { Statistic, Row, Col, Tooltip } from 'antd';
+import { Statistic, Row, Col, Tooltip, Divider } from 'antd';
 import './TweetsStatistics.scss';
 
 const columnSpan = 3
 
-export default function TweetsStatistics({ statistics }) {
+export default function TweetsStatistics({ statistics,
+  selectable = false,
+  onClick = () => false,
+  selected = []
+}) {
 
   const { users = 0,
     retweets = 0,
@@ -12,7 +16,9 @@ export default function TweetsStatistics({ statistics }) {
     total = 0,
     mentions = 0,
     replies = 0,
-    geolocated = 0 } = statistics
+    geolocated = 0,
+    originals = 0
+  } = statistics
 
   return <div className="tweets-statistics-container">
     <Row gutter={[8, 16]}>
@@ -48,20 +54,26 @@ export default function TweetsStatistics({ statistics }) {
       </Tooltip >
 
       <Tooltip title="Total de retweets">
-        <Col span={columnSpan}>
-          <Statistic title="Retweets" value={retweets} />
+        <Col span={columnSpan} >
+          <div onClick={_ => onClick("retweet")}>
+            <Statistic className={`retweets ${selectable ? "selectable" : ""} ${selected.includes("retweet") ? "selected" : ""}`} title="Retweets" value={retweets} />
+          </div>
         </Col>
       </Tooltip >
 
       <Tooltip title="Total de respostas">
         <Col span={columnSpan}>
-          <Statistic title="Respostas" value={replies} />
+          <div onClick={_ => onClick("reply")}>
+            <Statistic className={`${selectable ? "selectable" : ""} ${selected.includes("reply") ? "selected" : ""}`} title="Respostas" value={replies} />
+          </div>
         </Col>
       </Tooltip >
 
       <Tooltip title="Total de tweets que não são retweets ou respostas">
         <Col span={columnSpan}>
-          <Statistic title="Originais" value={total - retweets - replies} />
+          <div onClick={_ => onClick("original")}>
+            <Statistic className={`${selectable ? "selectable" : ""} ${selected.includes("original") ? "selected" : ""}`} title="Originais" value={originals} />
+          </div>
         </Col>
       </Tooltip >
 

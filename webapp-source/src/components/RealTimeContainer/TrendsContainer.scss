@@ -1,0 +1,21 @@
+.ant-select-selection {
+  width: 300px;
+  background-color: #dadada;
+}
+
+h3 {
+  color: white;
+  display: block;
+  margin-right: 10px;
+  width: 100%;
+  text-align: left;
+}
+
+.trends {
+  text-align: justify;
+
+  .ant-tag {
+    margin-bottom: 5px;
+    cursor: pointer;
+  }
+}
