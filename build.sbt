@@ -13,3 +13,5 @@ libraryDependencies += "com.typesafe.akka" %% "akka-http" % "10.1.11"
 libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-mongodb" % "2.0.1"
 libraryDependencies += "org.mongodb.scala" %% "mongo-scala-driver" % "2.9.0"
 
+mainClass in (Compile, run) := Some("Server")
+
