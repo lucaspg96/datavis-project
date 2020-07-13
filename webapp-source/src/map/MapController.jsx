@@ -10,6 +10,12 @@ var legend = undefined;
 var markersLayer = undefined
 
 export function createMap(containerId) {
+    if (map) {
+        markersLayer = undefined
+        dataWithoutPosition = 0
+        map.remove()
+        legend = undefined
+    }
     map = L.map(containerId, {
         center: [0, 0],
         zoom: 1,
@@ -66,7 +72,8 @@ export function createMarker(tweet) {
     })
         .bindPopup(createPopup(tweet))
 
-    marker.id = tweet.id
+    // marker.id = tweet.id
+    // console.log(marker)
 
     return marker
 
@@ -80,8 +87,8 @@ export function addMarker(tweet, duration = 20000, staticMap = false) {
 
     if (tweet.position) {
         const marker = createMarker(tweet)
-            .addTo(markersLayer)
 
+        marker.addTo(markersLayer)
 
         if (!staticMap) {
             setTimeout(() => {
