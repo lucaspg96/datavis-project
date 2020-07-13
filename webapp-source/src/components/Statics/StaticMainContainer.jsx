@@ -63,7 +63,7 @@ export function StaticMainContainer({ onBack }) {
     const [coloredKeys, setColors] = useState([]);
 
     const [dateFormater, setDateFormater] = useState(() => formatFunctions.identity)
-    const dateFormatSelect = <Select defaultValue={"identity"} onChange={f => setDateFormater(() => formatFunctions[f])}>
+    const dateFormatSelect = <Select disabled={dateInterval} defaultValue={"identity"} onChange={f => setDateFormater(() => formatFunctions[f])}>
         <Option key={0} value="identity">Momento exato</Option>
         <Option key={1} value="seconds">Segundos</Option>
         <Option key={2} value="minutes">Minutos</Option>
@@ -82,7 +82,7 @@ export function StaticMainContainer({ onBack }) {
     </Tooltip >
 
 
-    const [facts, setFacts] = useState()
+    const [globalFacts, setGlobalFacts] = useState()
 
     function getTweetType(tweet) {
         if (tweet.retweet) return "Retweet"
@@ -119,40 +119,41 @@ export function StaticMainContainer({ onBack }) {
     }, [data])
 
     useEffect(() => {
-        if (facts) {
-            drawSeriesChart(facts).render()
-        }
-    }, [dateFormater, facts])
+        const seriecChart = drawSeriesChart()
+
+        if (seriecChart) seriecChart.render()
+        // drawBarChart(facts).render()
+        // drawSunburst(facts).render()
+
+    }, [dateFormater])
 
     useEffect(() => {
-        if (facts) {
-            if (dateInterval) {
-                const newFacts = crossfilter(data.filter(dateFilter))
-                drawBarChart(newFacts).render()
-                drawSunburst(newFacts).render()
-            }
-            else {
-                const factsData = (data || [])
-                const facts = crossfilter(factsData)
-                // const idDimension = facts.dimension(d => d.id)
+        if (globalFacts) {
+            clearFilters()
+            drawSeriesChart().render()
+            drawBarChart().render()
+            drawSunburst().render()
 
+            dc.renderAll()
+        }
+    }, [globalFacts])
 
-                // MapController.getMap()
-                //     .on('moveend', e => updateAreaFilter(e, idDimension))
+    useEffect(() => {
 
-                drawBarChart(facts);
-                drawSeriesChart(facts);
-                // configStats();
-                // addMarkers();
-                // drawWordChart();
-                drawSunburst(facts);
-
-                dc.renderAll()
-
-            }
+        if (dateInterval) {
+            clearFilters()
+            const newFacts = crossfilter(data.filter(dateFilter))
+            drawBarChart(newFacts).render()
+            drawSunburst(newFacts).render()
+        }
+        else {
+            const factsData = (data || [])
+            const facts = crossfilter(factsData)
+            setGlobalFacts(facts)
         }
 
-    }, [dateInterval, facts])
+
+    }, [dateInterval])
 
     useEffect(() => {
         MapController.clearMarkers()
@@ -200,25 +201,31 @@ export function StaticMainContainer({ onBack }) {
     //     idDimension.filterFunction(id => visible.has(id))
     // }
 
+    function clearFilters() {
+        setSelectedKeys([])
+        setSelectedTypes([])
+    }
+
     function draw() {
         if (data) {
             const factsData = (data || [])
             const facts = crossfilter(factsData)
-            setFacts(facts)
+            setGlobalFacts(facts)
+
             // const idDimension = facts.dimension(d => d.id)
 
 
             // MapController.getMap()
             //     .on('moveend', e => updateAreaFilter(e, idDimension))
 
-            drawBarChart(facts);
-            drawSeriesChart(facts);
+            // drawBarChart();
+            // drawSeriesChart();
             configStats();
             addMarkers();
             drawWordChart();
-            drawSunburst(facts);
+            // drawSunburst();
 
-            dc.renderAll()
+            // dc.renderAll()
         }
 
     }
@@ -308,7 +315,8 @@ export function StaticMainContainer({ onBack }) {
     }
 
     /** Bar Chart */
-    function drawBarChart(facts) {
+    function drawBarChart(facts = globalFacts) {
+        if (!facts) return
         const keyDimension = facts.dimension(d => d.key)
         const keyCountGroup = keyDimension.group()
 
@@ -367,8 +375,8 @@ export function StaticMainContainer({ onBack }) {
     }
 
     /** Series Chart */
-    function drawSeriesChart(facts) {
-
+    function drawSeriesChart(facts = globalFacts) {
+        if (!facts) return
         const timeDimension = facts.dimension(d => [d.key, dateFormater(d.date)])
         const timeCountGroup = timeDimension.group()
 
@@ -452,7 +460,8 @@ export function StaticMainContainer({ onBack }) {
 
     }
 
-    function drawSunburst(facts) {
+    function drawSunburst(facts = globalFacts) {
+        if (!facts) return
         const typesDimension = facts.dimension(d => d.type)
         const typesCountGroup = typesDimension.group()
 
